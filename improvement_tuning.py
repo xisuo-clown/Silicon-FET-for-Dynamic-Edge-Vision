@@ -32,6 +32,8 @@ def para_transistor_exp():
     # pulse number(-1.4v, 200us)
     # unit: uA
     t1, y1 = -57.98876, 9.46142E-5
+
+
     i_first = 0.00000259
     return a1, a2, tau1, tau2, t1, y1, i_first
 
@@ -171,11 +173,13 @@ def process_cal(n, n_list, label_arr, set_eve, indexarr, save_path):
                 for i in range(128 * 128):
                     if events_dict_time[i]:
                         i_last = i_first
+                        #####instant current value calculation for each pixel(transistor)
                         for j in range(len(events_dict_time[i]) - 1):
                             t = events_dict_time[i][j]
                             id_b_p = id_time(i_last, t, a1, a2, tau1, tau2)
                             # print(id_b_p)
                             i_last = id_num_exp(id_b_p, t1, y1)
+                        #####
                         t = events_dict_time[i][len(events_dict_time[i]) - 1]
                         # print("t is {}".format(t))
                         id_b_p = id_time(i_last, t, a1, a2, tau1, tau2)
@@ -418,7 +422,7 @@ def gen_tuned_stack_frame(n, tune: bool):
     print(end - begin)
 
 
-def load_tuned_removed7(Aug: bool):
+def load_tuned_removed7(Aug: bool,random_state=42,test_size=0.125):
     import time
     from event_stream import find_path
     import numpy as np
@@ -463,9 +467,9 @@ def load_tuned_removed7(Aug: bool):
     x_train, x_test = x[0], x[1]
     y_train, y_test = y[0], y[1]
     x_train, x_test = frame_normalization(x_train, x_test)
-    seed = 42
+    seed = random_state
     x_train, x_val, y_train, y_val = (
-        train_test_split(x_train, y_train, test_size=0.125, random_state=seed))
+        train_test_split(x_train, y_train, test_size=test_size, random_state=seed))
     return x_train, x_test, y_train, y_test, x_val, y_val
 
 

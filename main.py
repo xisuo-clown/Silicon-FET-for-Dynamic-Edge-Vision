@@ -1,34 +1,71 @@
-import DVS_Animals
+#import DVS_Animals
+# from Visualization import img_show, img_show_tuning, img_show_before_tuning
+# img_show(if_train=True, a=1)
+import sys
+
+
+
+
 
 if __name__ == '__main__':
+    # import os
+    #
+    # os.environ['TF_DETERMINISTIC_OPS'] = '1 '
+    # import Visualization
+    # Visualization.img_show(if_train=True,a=1)
+    import os
+    # import pycuda.driver as cuda
+    # import pycuda.autoinit
+    # print("CUDA version:", cuda.get_version())
+    # import tensorflow as tf
+    #
+    # import sys
+    #
+    # print(sys.path)
+    # sys.exit()
+    # # 检查是否可以使用 GPU
+    # if tf.test.is_gpu_available():
+    #     print("cuDNN version:", tf.sysconfig.get_build_info()["cudnn_version"])
+    # else:
+    #     print("GPU is not available.")
+    # sys.exit()
+    # 获取 PATH 环境变量
+    # path_env = os.environ.get('LD_LIBRARY_PATH')
+    #
+    # # 打印 PATH
+    # print("Current PATH:", path_env)
+    # sys.exit()
     import event_stream
-
+    #import gpu_detection
+    #gpu_detection.gpu_list()
     #
     # event_stream.polarity_process_transistor_match(train=True)
     # event_stream.polarity_process_transistor_match(train=False)
 
     # #
-    # # event_stream.polarity_process_transistor_cal(train=True)
-    # # event_stream.polarity_process_transistor_cal(train=False)
-
-    # event_stream.polarity_process_transistor_conditions(train=True)
-    # event_stream.polarity_process_transistor_conditions(train=False)
+    # event_stream.polarity_process_transistor_cal(train=True)
+    # event_stream.polarity_process_transistor_cal(train=False)
+    #
+    #event_stream.polarity_process_transistor_conditions(train=True)
+    #event_stream.polarity_process_transistor_conditions(train=False)
 
     #
     # #
     import frames_processing
-    # #
-    # # # #
-    # # # # # # origin data
-    # frames_processing.gen_stack_frame(Aug=False)
+    # # #
+    # # # # #
+    # # # # # # # origin data
+    # aug=False
+    #frames_processing.gen_augmentation_frame()
+    # frames_processing.gen_stack_frame(Aug=True)
     # frames_processing.polar_remove_set7(aug=False)
+    # # # #
+    # # # #
     # # #
-    # # #
-    # #
-    # # # # utilize augmented data
+    # # # # # # utilize augmented data
     # frames_processing.gen_augmentation_frame()
     # frames_processing.polar_remove_set7(aug=True)
-    # #
+    # # #
     # #
     # # # ######################
     import improvement_tuning
@@ -38,25 +75,33 @@ if __name__ == '__main__':
     # improvement_tuning.add_polarity_process_transistor(8, train=False,calculate=False)
     # improvement_tuning.gen_augmentation_frame(8)
 
-    # improvement_tuning.gen_tuned_stack_frame(9, tune=True)
-
+    # improvement_tuning.gen_tuned_stack_frame(8, tune=True)
     # # readout model
+    if len(sys.argv) > 1:
+        name = sys.argv[2]
+    else:
+        name="default_name_model.weights.h5"
+    from tools import find_gpu_with_min_usage
+    find_gpu_with_min_usage()
     import resnet_10
-    # resnet_10.hyper_tuner(aug=True, tune=False)
-    # resnet_10.hyper_tuner(aug=True, tune=True)
+    # # resnet_10.hyper_tuner(aug=True, tune=False)
 
-    import Logistic_Regression
+    # resnet_10.hyper_tuner_for_times(aug=True, tune=False, model_path=name,times=5)
+    resnet_10.hyper_tuner_for_times(aug=True, tune=True, model_path=name,times=5)
+    # import resnet_10
+    # resnet_10.load_existed_model();
+    # import Logistic_Regression
     # Logistic_Regression.logistic_regression()
-    # # # # # ########################
-    from Visualization import img_show, img_show_tuning, img_show_before_tuning
-    #     n = 0
+    # # # # # # ########################
+    # from Visualization import img_show, img_show_tuning, img_show_before_tuning
+    #
     # img_show(if_train=True, a=1)
     #     # for i in range (6):
     #     #     a = n * 6 - 1 + i
     #     #     img_show(if_train=True, a=a)
     #     #
     # img_show(if_train=True, a=1)
-
+    #
     # img_show_tuning(if_train=True, n=1, class_num=9)
     # img_show_before_tuning(if_train=True, n=1, class_num=9)
 
@@ -101,18 +146,18 @@ if __name__ == '__main__':
 
     # events_dict_pos_time, events_dict_neg_time, label = frame_n.Event_List()
     # print(events_dict_pos_time)
-    # ###########$$$$$dvs animals
-    import DVS_Animals
-    import time
-    # dataPath = "C:/Users/ASUS/OneDrive - Nanyang Technological University/datasets/DVSAnimals/data/"
-    # DVS_Animals.load_check_items()
-    # DVS_Animals.slice(dataPath)
-    # DVS_Animals.check_length()
-
-    # DVS_Animals.Collect_Frames()
-
-    # DVS_Animals.hyper_tuner(Aug=False)
-    DVS_Animals.hyper_tuner(Aug=True)
+    # # ###########$$$$$dvs animals
+    # import DVS_Animals
+    # import time
+    # # dataPath = "C:/Users/ASUS/OneDrive - Nanyang Technological University/datasets/DVSAnimals/data/"
+    # # DVS_Animals.load_check_items()
+    # # DVS_Animals.slice(dataPath)
+    # # DVS_Animals.check_length()
+    #
+    # # DVS_Animals.Collect_Frames()
+    #
+    # # DVS_Animals.hyper_tuner(Aug=False)
+    # DVS_Animals.hyper_tuner(Aug=True)
 
     # test
 

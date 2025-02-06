@@ -17,8 +17,7 @@ import math
 # Path #####################
 def find_path():
     # Original event stream file path
-    root_dir = ('C:/Users/ASUS/OneDrive - Nanyang Technological University/'
-                'datasets/DVS128Gesture')
+    root_dir = '/usr1/home/s124mdg41_03/Integrated_package/DvsGes'
     # path for event array saving: train and test
     train_save_path = (root_dir + '/event_array/train_set_eve/')
     test_save_path = (root_dir + "/event_array/test_set_eve/")
@@ -101,6 +100,7 @@ def polar_save_as_list(set_eve, n, indexarr):
     dict_pos = {}
     dict_neg = {}
     end_time = []
+
 
     dict_neg_time = {}
     dict_pos_time = {}
@@ -401,7 +401,10 @@ def generate_comparison_idpd_index():
             # key i: save id (pulse x)
             # list[i]:save id(after i+1 pulses, before i+2 pulses),
             # e.g. list[0] equals to id(after pul1, before pul2)
+
+            ######in this function it produces the value of transistor by time without pulse
             id_list.append(id_time(id_num((x - 1), b1, b2, t1, t2, y1), t_interval, a1, a2, tau1, tau2))
+            ######in this function it produces the current value of transistor by successive pulse
             id_pulse_dict[x] = id_num(x, b1, b2, t1, t2, y1)
             # print(id_pulse_dict[x])
         else:

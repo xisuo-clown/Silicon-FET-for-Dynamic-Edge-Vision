@@ -4,7 +4,7 @@ import numpy as np
 
 
 ########################################################@@@@display fig(gesture, with polarity)
-def img_show(if_train: bool, a: int):
+def img_show(if_train: bool, a: int,if_tune:bool=False):
     import os
     import event_stream
     root_dir, train_save_path, test_save_path = event_stream.find_path()
@@ -30,19 +30,21 @@ def img_show(if_train: bool, a: int):
     # cmap = 'magma'
     cmap = 'viridis'
 
-    n = int(n_num * a + (n_num - 1))
-    print(n, n_num)
+    # n = int(n_num * a + (n_num - 1))
+    # print(n, n_num)
     ###################show a given frame, before stack
-    output_arr = np.load(dataset_path + '{0}.npy'.format(n), allow_pickle=True)
+    label_list = np.load(dataset_path + "dataset_labels.npy", allow_pickle=True)
+    n=a*n_num-1
+    label = label_list[n]
+
+    if if_tune:
+        output_arr = np.load(dataset_path + 'class8_tuned_{0}.npy'.format(n), allow_pickle=True)
+    else:
+        output_arr = np.load(dataset_path + '{0}.npy'.format(n), allow_pickle=True)
     # output_arr_stack = np.load(dataset_path + 'dataset_features_remove.npy', allow_pickle=True)
     # print(output_arr[0].shape)
     # output_arr = output_arr[0]
     print(output_arr.shape)
-    label_list = np.load(dataset_path + "dataset_labels.npy", allow_pickle=True)
-    label = label_list[n]
-
-    if label > 2:
-        a += 98
     # ########show a given frame, after stack, and augmentation
     # output_arr_stack = np.load(path_2, allow_pickle=True)
     # output_arr = output_arr_stack[n]

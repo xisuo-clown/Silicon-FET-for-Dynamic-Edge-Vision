@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 import IPython
 from keras import Input
@@ -114,16 +112,10 @@ class ResNet18(Model):
         filters = [32, 64, 64]
         k = [0.8, 0.9, 1, 1, 1, 1]
         # k = [1, 1, 1, 1, 1, 1]
-        # previous function
         self.conv_1 = Conv2D(filters[0],
                              (4, 4),
                              strides=2,
                              padding="same", kernel_initializer="he_normal")
-        # now function
-        # self.conv_1 = Conv2D(filters[0],
-        #                      (4, 4),
-        #                      strides=2,
-        #                      padding="same", kernel_initializer="ones")
         self.init_bn = BatchNormalization()
         self.pool_2 = MaxPool2D(
             pool_size=(2, 2),
@@ -200,68 +192,20 @@ class ClearTrainingOutput(tf.keras.callbacks.Callback):
         IPython.display.clear_output(wait=True)
 
 
-def hyper_tuner_for_times(aug, tune, model_path, times):
-    random_state = random.randint(1, 1000)
-    train_validation_rate = random.uniform(0.1, 0.2)
-    initial_learning_rate = random.uniform(0.01, 0.1)
-    decay_steps = random.randint(1000, 5000)
-    decay_rate = random.uniform(0.1, 1)
-    STEPS = random.randint(100, 200)
-    from datetime import datetime
-    if tune:
-        name = datetime.now().strftime("%Y%m%d_%H%M%S") + "_tuned"
-    else:
-        name = datetime.now().strftime("%Y%m%d_%H%M%S")
-    for i in range(times):
-        hyper_tuner(aug, tune, model_path, name+f"_{i}", random_state, train_validation_rate, initial_learning_rate,
-                    decay_steps, decay_rate, STEPS)
-
-
 # #########build model############################################
-def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate, initial_learning_rate, decay_steps,
-                decay_rate, STEPS):
-    dir_name = 'dec_results'
+def hyper_tuner(aug, tune, model_path):
     import time
     start = time.time()
-    import random
-    txt_data = {}
-    txt_name = "20241103_002953"
-    # with open(f"./{dir_name}/{txt_name}.txt", "r", encoding="utf-8") as file:
-    #     for line in file:
-    #         if "accuracy" not in line and "tune" not in line:
-    #             txt_data[line.split(":")[0]]=line.split(":")[1][:-2].strip()
-    #             if "." in line.split(":")[1][:-2].strip():
-    #                 txt_data[line.split(":")[0]]=float(txt_data[line.split(":")[0]])
-    #             else:
-    #                 txt_data[line.split(":")[0]] = int(txt_data[line.split(":")[0]])
-    # random data
-    # random_state = random.randint(1, 1000)
-    # train_validation_rate = random.uniform(0.1, 0.2)
-    # load existed data
-    # random_state=txt_data["random_seed"]
-    # train_validation_rate=txt_data["test_size"]
+
     if tune:
         from improvement_tuning import load_tuned_removed7
-        x_train, x_test, y_train, y_test, x_val, y_val = load_tuned_removed7(aug, random_state, train_validation_rate)
+        x_train, x_test, y_train, y_test, x_val, y_val = load_tuned_removed7(Aug=aug)
     else:
         from frames_processing import polar_remove_load, polar_remove_set7_load
         # x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_set7_load(aug)
-        x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate)
+        x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug)
 
-    # random data
-    # initial_learning_rate = random.uniform(0.01, 0.1)
-    # decay_steps = random.randint(1000, 5000)
-    # decay_rate = random.uniform(0.1, 1)
-    # STEPS = random.randint(100, 200)
-    bs = int(len(x_train) / STEPS)
-
-    # # load existed data
-    # initial_learning_rate = txt_data["initial_learning_rate"]
-    # decay_steps = txt_data["decay_steps"]
-    # decay_rate = txt_data["decay_rate"]
-    # STEPS = txt_data["STEPS"]
-    # bs = txt_data["batchsize"]
-
+    # cannot work
     # x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug)
 
     print('train shape{0}, validation shape {1},test shape {2}'.format
@@ -280,14 +224,14 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
         expand_nested=False  # will show nested block
     )
     # ################## learning rate scheduler
-    import random
+    initial_learning_rate = 0.01
 
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         # initial_learning_rate,
-        initial_learning_rate=initial_learning_rate,
+        initial_learning_rate=0.01,
         # initial_learning_rate=0.01,
-        decay_steps=decay_steps,
-        decay_rate=decay_rate,
+        decay_steps=5000,
+        decay_rate=0.5,
         # decay_steps=3000,
         # decay_rate=0.5,
 
@@ -322,7 +266,7 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
 
     from event_stream import find_path
     root_dir, train_path, test_path = find_path()
-    checkpoint_path = root_dir + "/dvs_SAVE_new_2/" + model_path
+    checkpoint_path = root_dir + "/dvs_SAVE_new_2/"+model_path
     import os
     checkpoint_dir = os.path.dirname(checkpoint_path)
     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
@@ -335,7 +279,8 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     #     bs = 45
     # STEPS = len(train_n) / bs
     # STEPS = 170
-
+    STEPS = 128
+    bs = int(len(x_train) / STEPS)
     history = hypermodel.fit(x_train, y_train, batch_size=bs, steps_per_epoch=STEPS,
                              # epochs=140,
                              epochs=120,
@@ -348,15 +293,10 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     # # Create a callback that saves the model's weights###########
     hypermodel.summary()
     # plot loss during training
-    from datetime import datetime
-    import random
-    import string
-
-    plt_loss_acc(history, name, dir_name)
+    plt_loss_acc(history)
     accuracy = hypermodel.evaluate(x_test, y_test, verbose=0)[1]
     print('Accuracy:', accuracy)
-    # with open("max_Accuracy.txt", "r") as file:
-    #     maxVal=float(file.read())
+
     # ####################################
     y_pred = np.array(list(map(lambda x: np.argmax(x), hypermodel.predict(x_test))))
     # ###############
@@ -365,31 +305,11 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     # y_pred = hypermodel.predict(x_test)
 
     # ###########
-    # if maxVal<accuracy:
-    #     plt_loss_acc(history)
-    #     plot_cm(y_test, y_pred, accuracy)
-    #     with open("max_Accuracy.txt", "w") as file:
-    #         file.write(str(accuracy))
-    #     import os
 
-    # 手动复制文件
-    #         with open(checkpoint_path, "rb") as source:
-    #             with open("destination_file.h5", "wb") as destination:
-    #                 destination.write(source.read())
-
+    plot_cm(y_test, y_pred, accuracy)
     # sum_n_acc(y_pred, y_test, n_num)
-
-    plot_cm(y_test, y_pred, accuracy, name, dir_name)
-
-    savepara = {"initial_learning_rate": initial_learning_rate, "decay_steps": decay_steps,
-                "decay_rate": decay_rate, "STEPS": STEPS, "batchsize": bs, "accuracy": accuracy
-        , "random_seed": random_state, "test_size": train_validation_rate, "tune": tune}
-    with open(f"{dir_name}/{name}.txt", "w") as file:
-        file.write(",\n".join([f"{name}: {value}" for name, value in savepara.items()]))
-    hypermodel.save_weights(f"{dir_name}/{name}.h5")
     end = time.time()
     print('Training time: ', end - start)
-
     return x_train, x_val, x_test, y_train, y_val, y_test
 
 
@@ -442,7 +362,7 @@ def sum_n_acc(y_pred, test_label_list, n_num):
     print('final accuracy is: ', accuracy)
 
 
-def plot_cm(y_test, y_pred, accuracy, name, results):
+def plot_cm(y_test, y_pred, accuracy):
     import matplotlib.pyplot as plt
     import seaborn as sns
     axis_labels = ['Clapping hands', 'Right hand\nwave', 'Left hand\nwave',
@@ -482,14 +402,12 @@ def plot_cm(y_test, y_pred, accuracy, name, results):
     plt.title("Confusion Matrix", fontdict=TITLE_FONT_SIZE, fontweight='bold')
     # plt.colorbar(g)
     g.text(40, -2.4, 'Accuracy {0}'.format(accuracy * 100), fontsize=14, color='black')
-
-    plt.savefig(f'{results}/{name}_cm.png')
     plt.show()
     plt.clf()
     # g.clf()
 
 
-def plt_loss_acc(history, name, results):
+def plt_loss_acc(history):
     # # ###########
     # plot loss during training
     import matplotlib.pyplot as plt
@@ -508,9 +426,8 @@ def plt_loss_acc(history, name, results):
     axs[1].legend(loc='lower right')
 
     fig.tight_layout()
-    fig.savefig(f'{results}/{name}_loss.png')
     fig.show()
-
+    fig.savefig('loss.png')
 
 # #############call back. load model from check point############
 def load_cp():

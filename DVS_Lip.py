@@ -29,6 +29,17 @@ def initial_load(train: bool = True):
     return dataset, data_num
 
 
+def gen_aug():
+        import frames_processing
+        frames_processing.gen_augmentation_frame_new()
+
+def gen_aug_stack_frame():
+        import frames_processing
+        frames_processing.gen_stack_frame_new(True)
+
+
+
+
 def Collect_Frames():
     index_array = index_arr()
     c = 1.3E-3
@@ -154,7 +165,108 @@ def hyper_tuner():
     end = time.time()
     print('Training time: ', end - start)
 
+def hyper_tuner_aug():
+    import time
+    import os
+    import tensorflow as tf
+    start = time.time()
 
+    x_test = np.load(os.path.join(path_list(False).present_path(), "dataset_features.npy"), allow_pickle=True)
+    y_test = np.load(os.path.join(path_list(False).present_path(), "dataset_labels.npy"), allow_pickle=True)
+    x_train = np.load(os.path.join(path_list(True).present_path(), "trainAug_dataset_features.npy"), allow_pickle=True)
+    y_train = np.load(os.path.join(path_list(True).present_path(), "trainAug_dataset_labels.npy"), allow_pickle=True)
+    seed = 42
+    from sklearn.model_selection import train_test_split
+    x_train, x_val, y_train, y_val = (
+        train_test_split(x_train, y_train, test_size=0.125, random_state=seed))
+
+    print('train shape{0}, validation shape {1},test shape {2}'.format
+          (x_train.shape, x_val.shape, x_test.shape))
+
+    # ########residual##########################
+    from keras.callbacks import EarlyStopping
+    hypermodel = ResNet18(100)
+    # #print the model# ############
+    hypermodel.build(input_shape=(None, 128, 128, 2))
+    hypermodel.build_graph().summary()
+    tf.keras.utils.plot_model(
+        hypermodel.build_graph(),  # here is the trick (for now)
+        to_file='model.png', dpi=96,  # saving
+        show_shapes=True, show_layer_names=True,  # show shapes and layer name
+        expand_nested=False  # will show nested block
+    )
+    # ################## learning rate scheduler
+    initial_learning_rate = 0.01
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate,
+        # initial_learning_rate = 0.05
+        decay_steps=3000,
+        decay_rate=0.5,
+        staircase=True)
+    # #########################
+    hypermodel.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+        # optimizer=tf.keras.optimizers.SGD(learning_rate=lr_schedule, momentum=0.9),
+        loss='sparse_categorical_crossentropy',
+        metrics=["accuracy"])
+    # hypermodel.summary()
+    # ############################# call back: the early stopping
+    es = EarlyStopping(patience=45, restore_best_weights=True, monitor="val_accuracy")
+    # reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+    #     monitor='val_loss',
+    #     factor=0.1,
+    #     patience=10,
+    #     min_lr=1e-6,
+    #     verbose=1)
+    # ####check point path for model loading
+
+    from event_stream import find_path
+    root_dir, train_path, test_path = find_path()
+    checkpoint_path = root_dir + "/lip_0/cp.ckpt"
+    import os
+    checkpoint_dir = os.path.dirname(checkpoint_path)
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                     save_weights_only=True,
+                                                     verbose=1)
+
+    STEPS = 96
+    bs = int(len(x_train) / STEPS)
+    history = hypermodel.fit(x_train, y_train, batch_size=bs, steps_per_epoch=STEPS,
+                             epochs=140,
+                             # epochs=800,
+                             validation_data=(x_val, y_val),
+                             callbacks=[
+                                 # es,
+                                 cp_callback
+                             ]
+                             )
+    # # Create a callback that saves the model's weights###########
+    hypermodel.summary()
+    # plot loss during training
+    from resnet_10 import plt_loss_acc
+    plt_loss_acc(history)
+    accuracy = hypermodel.evaluate(x_test, y_test, verbose=0)[1]
+    print('Accuracy:', accuracy)
+
+    # ####################################
+    y_pred = np.array(list(map(lambda x: np.argmax(x), hypermodel.predict(x_test))))
+    # ###############
+    # hypermodel.load_weights("/training_1/cp.ckpt")
+    # accuracy = hypermodel.evaluate(x_test, y_test, verbose=0)[1]
+    # y_pred = hypermodel.predict(x_test)
+
+    # ###########
+
+    from sklearn.metrics import confusion_matrix, classification_report
+    cm = confusion_matrix(y_test, y_pred)
+    cm_normal = np.round(cm / np.sum(cm, axis=1).reshape(-1, 1), 2)
+
+    classification_report(y_test, y_pred)
+    fig_cm = plot_cm(cm_normal, accuracy)
+    fig_cm.plot_cm()
+
+    end = time.time()
+    print('Training time: ', end - start)
 class DVS_Lip:
     # file_path = os.path.join(path, self.folder_name)
     def __init__(self, dataset, n, index_array, c, train, save_path):
@@ -170,6 +282,7 @@ class DVS_Lip:
         events, target = self.dataset[self.n]
         # print("The corresponding class is {}".format(target))
         return events, target
+
 
     def Event_List(self):
         events, label = self.Pack_Item()
@@ -218,8 +331,6 @@ class DVS_Lip:
         # return dict_pos, dict_neg, label, end_time
         return events_dict_pos_time, events_dict_neg_time, label
 
-
-
     def test(self):
         events, label = self.Pack_Item()
         x0 = tuple(events["x"])
@@ -237,7 +348,8 @@ class DVS_Lip:
         # j range(n): split event stream within ne parts,
         # Each part contains n event in whole event stream
         end_t = (t[-1] - t[0]) * 1E-6 * self.c
-        print("No.{0} end t is {1}, t[0] is {2}".format(self.n, end_t,t[0]))
+        print("No.{0} end t is {1}, t[0] is {2}".format(self.n, end_t, t[0]))
+
     # Save the positive & negative, generate 30 samples from per video
     def Polarity_Match(self):
         id_list, id_pulse_dict = generate_comparison_idpd_index()
@@ -275,15 +387,18 @@ class path_list:
     def __init__(self, train):
         self.save_path = None
         self.train = train
-        self.root_dir = "C:/Users/ASUS/OneDrive - Nanyang Technological University/datasets/"
+        import os
+        self.root_dir =  os.getcwd()
 
     def present_path(self):
-        root_dir = "C:/Users/ASUS/OneDrive - Nanyang Technological University/datasets/"
+        import os
+        root_dir = os.getcwd()
         if self.train:
-            save_path = (root_dir + '/DVSLip/events_frames/train/')
+            save_path = (root_dir + '/DvsLip/events_frames/train/')
         else:
-            save_path = (root_dir + '/DVSLip/events_frames/test/')
+            save_path = (root_dir + '/DvsLip/events_frames/test/')
         return save_path
+
 
 class plot_cm:
     def __init__(self, cm, accuracy):
@@ -295,7 +410,7 @@ class plot_cm:
         import seaborn as sns
         plt.figure(
             figsize=(50, 50)
-                   )
+        )
         TITLE_FONT_SIZE = {"size": "22"}
         LABEL_SIZE = 13
         sns.set(
@@ -320,13 +435,14 @@ class plot_cm:
         plt.xlabel("Predicted", fontweight='bold',
                    fontdict=TITLE_FONT_SIZE
                    )
-        plt.ylabel("Actual",fontweight='bold',
+        plt.ylabel("Actual", fontweight='bold',
                    fontdict=TITLE_FONT_SIZE
                    )
         plt.title("Confusion Matrix", fontweight='bold',
                   fontdict=TITLE_FONT_SIZE
                   )
         g.text(40, -2.4, 'Accuracy {0}'.format(self.accuracy * 100), fontsize=14, color='black')
+        plt.savefig('plot1.png')
         plt.show()
         plt.clf()
 

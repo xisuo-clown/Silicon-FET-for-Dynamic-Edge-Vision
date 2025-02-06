@@ -4,10 +4,8 @@ def logistic_regression():
     import numpy as np
 
     # load data
-    train_path = ("C:/Users/ASUS/OneDrive - Nanyang Technological University/"
-                  "datasets/DVS128Gesture/event_array/polar_train_set_eve/")
-    test_path = ("C:/Users/ASUS/OneDrive - Nanyang Technological University/"
-                 "datasets/DVS128Gesture/event_array/polar_test_set_eve/")
+    train_path = ('E:/Integrated_package/DvsGesture/DvsGesture')
+    test_path = ('E:/Integrated_package/DvsGesture/DvsGesture')
 
     # processing in
     features_train = np.load(os.path.join(train_path, "dataset_features_remove_flatten.npy"), allow_pickle=True)

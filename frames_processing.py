@@ -26,7 +26,7 @@ def gen_augmentation_frame():
         if i == 0:
             y_list = y
         else:
-            y_list = np.concatenate((y_list[:,], y[:,]), axis=0)
+            y_list = np.concatenate((y_list[:, ], y[:, ]), axis=0)
         np.save(train_path + "Aug_{}.npy".format(i), x)
     print('y_train shape: should be {0}, len_y is {1}'.format(6 * len(y_train), y_list.shape))
     np.save(train_path + "Aug_dataset_labels.npy", y_list)
@@ -37,8 +37,46 @@ def gen_augmentation_frame():
     print(end - begin)
 
 
+def gen_augmentation_frame_new():
+    label_path="dataset_labels.npy"
+    prefix=""
+    import os
+    import numpy as np
+    import time
+    from event_stream import find_path
+    begin = time.time()
+    root_dir, train_path, test_path = (os.getcwd()+r"/DvsLip", os.getcwd()+r"/DvsLip/events_frames/train",
+                                       os.getcwd()+r"/DvsLip/events_frames/test")
+    from tqdm import tqdm
+    from sklearn.preprocessing import LabelEncoder
+    # Augmentation: the training set (aug.npy and label index)
+    y_labelencoder = LabelEncoder()
+    y = np.load(os.path.join(train_path, label_path), allow_pickle=True)
+
+    y_train = y_labelencoder.fit_transform(y)
+    y_train = y_train.tolist()
+
+    for i in tqdm(range(len(y_train)), desc="Rotate and shift"):
+        path = os.path.join(train_path, f'{prefix}{i}.npy')
+        x_train = np.load(path, allow_pickle=True)
+        x, y = aug_process(x_train, y_train[i])
+        # os.remove(path)
+        if i == 0:
+            y_list = y
+        else:
+            y_list = np.concatenate((y_list[:, ], y[:, ]), axis=0)
+        np.save(train_path + f"Aug_{prefix}{i}.npy", x)
+    print('y_train shape: should be {0}, len_y is {1}'.format(6 * len(y_train), y_list.shape))
+    np.save(train_path + "Aug_dataset_labels.npy", y_list)
+    # stack the frames: train and test
+    gen_stack_frame(Aug=True)
+    print('END: Stacking')
+    end = time.time()
+    print(end - begin)
+
+
 # augmentation process
-def aug_process(x_train, y_train:int):
+def aug_process(x_train, y_train: int):
     from keras.layers import RandomRotation, RandomTranslation
     from keras import Sequential
     from numpy import expand_dims, row_stack, empty
@@ -65,7 +103,76 @@ def aug_process(x_train, y_train:int):
     # y_list = row_stack((y_list, y))
     return x, y
 
+def gen_stack_frame_new(Aug: bool,label_path="", prefix=""):
+    import os
+    import numpy as np
+    import time
+    begin = time.time()
+    root_dir, train_path, test_path = (os.getcwd()+r"/DvsLip", os.getcwd()+r"/DvsLip/events_frames/train",
+                                       os.getcwd()+r"/DvsLip/events_frames/test")
+    path_type = [train_path, test_path]
+    # processing
+    import tensorflow as tf
+    from numpy import expand_dims
+    from tqdm import tqdm
+    name_type = ['Train', 'Test']
+    if Aug:
+        name_load = ['Aug_', '']
+        name_save = ['Aug_', '']
+        a = 6
 
+    else:
+        name_load = ['', '']
+        name_save = ['Ori_', '']
+        a = 1
+    # here we can choose, to stack the original frames, or the augmented frames
+
+    from sklearn.preprocessing import LabelEncoder
+    y_labelencoder = LabelEncoder()
+    for j in range(2):
+        y = np.load(os.path.join(path_type[j], "dataset_labels.npy"), allow_pickle=True)
+        print("y shape is {}".format(y.shape))
+        if j == 1:
+            a = 1
+        y = y_labelencoder.fit_transform(y)
+        y = y.tolist()
+        for i in tqdm(range(len(y)), desc="Stack_{}".format(name_type[j])):
+            path = path_type[j]+f'{name_load[j]}{i}.npy'
+            x = np.load(path, allow_pickle=True)
+            if x.ndim < 4:
+                x = expand_dims(x, axis=0)
+            y_1 = np.full(a, y[i])
+
+            # stack (creating a initial array)
+            if i != 0:
+                x_0[i * a:(i + 1) * a, :, :, :] = x
+                y_0[i * a:(i + 1) * a, ] = y_1
+                # print(y_0.shape)
+            else:
+                x_0 = np.zeros((len(y) * a, 128, 128, 2))
+                y_0 = np.zeros((len(y) * a,))
+                x_0[0:a, :, :, :] = x
+                y_0[0:a, ] = y_1
+            # os.remove(path)
+        print('fianl x shape: {0}, and len_y is {1}'.format(x_0.shape, len(y_0)))
+
+        # stack (without creating a initial array)
+        #     if i != 0:
+        #         x_0 = np.row_stack((x_0, x))
+        #         y_0 = np.concatenate((y_0[:,],y_1[:,]),axis=0)
+        #         # print(y_0.shape)
+        #     else:
+        #         x_0 = x
+        #         y_0 = y_1
+        #     # os.remove(path)
+        # print('fianl x_train shape: {0}, and len_y is {1}'.format(x_0.shape, len(y_0)))
+
+        np.save(path_type[j] + "{}dataset_features.npy".format(name_save[j]), x_0)
+        np.save(path_type[j] + "{}dataset_labels.npy".format(name_save[j]), y_0)
+        print("{0}, labels: {1}".format(name_type, y))
+    print('END: Stacking')
+    end = time.time()
+    print(end - begin)
 # stack frames
 def gen_stack_frame(Aug: bool):
     import os
@@ -107,16 +214,16 @@ def gen_stack_frame(Aug: bool):
                 x = expand_dims(x, axis=0)
             y_1 = np.full(a, y[i])
 
-        # stack (creating a initial array)
+            # stack (creating a initial array)
             if i != 0:
-                x_0[i*a:(i+1)*a,:,:,:] = x
-                y_0[i*a:(i+1)*a,] = y_1
+                x_0[i * a:(i + 1) * a, :, :, :] = x
+                y_0[i * a:(i + 1) * a, ] = y_1
                 # print(y_0.shape)
             else:
-                x_0 = np.zeros((len(y)*a,128, 128, 2))
-                y_0 = np.zeros((len(y)*a,))
-                x_0[0:a,:,:,:] = x
-                y_0[0:a,] = y_1
+                x_0 = np.zeros((len(y) * a, 128, 128, 2))
+                y_0 = np.zeros((len(y) * a,))
+                x_0[0:a, :, :, :] = x
+                y_0[0:a, ] = y_1
             # os.remove(path)
         print('fianl x shape: {0}, and len_y is {1}'.format(x_0.shape, len(y_0)))
 
@@ -213,8 +320,8 @@ def polar_remove_set7_load(aug):
     y_test = np.load(os.path.join(test_path, "dataset_labels_remove.npy".format(name)), allow_pickle=True)
     x_train = np.load(os.path.join(train_path, "{0}dataset_features_remove.npy".format(name)), allow_pickle=True)
     y_train = np.load(os.path.join(train_path, "{0}dataset_labels_remove.npy".format(name)), allow_pickle=True)
-    print(x_train.shape,y_train.shape)
-    print(x_test.shape,y_test.shape)
+    print(x_train.shape, y_train.shape)
+    print(x_test.shape, y_test.shape)
     from sklearn.model_selection import train_test_split
     # max_value = np.max(x_train)
     # min_value = np.min(x_train)
@@ -239,7 +346,7 @@ def polar_remove_set7_load(aug):
 
 
 # loading data
-def polar_remove_load(aug):
+def polar_remove_load(aug,random_state=86,train_validation_rate=0.125):
     import os
     from event_stream import find_path
     root_dir, train_path, test_path = find_path()
@@ -289,7 +396,7 @@ def polar_remove_load(aug):
     seed = 42
     from sklearn.model_selection import train_test_split
     x_train, x_val, y_train, y_val = (
-        train_test_split(x_train, y_train, test_size=0.125, random_state=86))
+        train_test_split(x_train, y_train, test_size=train_validation_rate, random_state=random_state))
     return x_train, x_test, y_train, y_test, x_val, y_val
 
 
