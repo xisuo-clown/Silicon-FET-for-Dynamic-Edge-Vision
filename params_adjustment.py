@@ -979,6 +979,8 @@ def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix=
     #     if
 
     # x_train, y_train = shuffle(x_tra, y_tra, random_state=seed)
+    from frames_processing import frame_normalization
+    x_train, x_test=frame_normalization(x_train, x_test)
     seed = 42
     from sklearn.model_selection import train_test_split
     x_train, x_val, y_train, y_val = (
@@ -1009,7 +1011,7 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     # random_state=txt_data["random_seed"]
     # train_validation_rate=txt_data["test_size"]
 
-    x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate, suffix)
+    x_train, x_test, y_train, y_test, x_val, y_val =  polar_remove_load(aug, random_state, train_validation_rate, suffix)
 
     # random data
     # initial_learning_rate = random.uniform(0.01, 0.1)
@@ -1233,7 +1235,7 @@ def dataset_generator_and_training(para_before_tune, para_after_tune, tune_choic
     results_save_path = os.path.join(test_save_path, "test_results")
     if if_only_train:
         os.makedirs(results_save_path, exist_ok=True)
-        for i in range(100):
+        for i in range(10):
             hyper_tuner_for_times(True, False, "results", 1, results_save_path, suffix)
 
     polarity_process_transistor_conditions(True, para_before_tune, para_after_tune, suffix, tune_choice)

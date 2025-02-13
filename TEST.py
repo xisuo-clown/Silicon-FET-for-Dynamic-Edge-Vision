@@ -50,11 +50,15 @@ if __name__ == '__main__':
 
     para_after_tune = calculate_match(y0, A1, t1, A2, t2, A3, t3, d, a, b)
     # choosing which set to tune
-    tune_choice = [False, False, False, False, False, False, False, False, False, True, False]
+    suffix=["tune_for_eight","tune_for_all","no_tune"]
+    tune_choice = [[False, False, False, False, False, False, False, False, False, True, False],
+                   [True, True, True, True, True, True, True, True, True, True, True],
+                   [False, False, False, False, False, False, False, False, False, False, False]]
     from event_stream import polarity_process_transistor_conditions
-    ap.dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
-                                      tune_choice=tune_choice,
-                                      suffix="tune_for_eight", if_only_train=False)
+    for i in range(len(suffix)):
+        ap.dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
+                                      tune_choice=tune_choice[i],
+                                      suffix=suffix[i], if_only_train=False)
     # ap.dataset_generator_and_training(
     #                                   suffix="eve_tune_1", if_only_train=False)
 
