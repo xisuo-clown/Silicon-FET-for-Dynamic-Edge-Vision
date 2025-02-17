@@ -3,13 +3,22 @@
 
 
 if __name__ == '__main__':
-    import gaussian_distribution as g
-    import params_adjustment as ap
+    print("this is the beginning of the main function")
     from tools import find_gpu_with_min_usage
+
+    find_gpu_with_min_usage()
     import numpy as np
     from params_adjustment import calculate_match
 
-    find_gpu_with_min_usage()
+    # gpus = tf.config.experimental.list_physical_devices('GPU')
+    # if gpus:
+    #     try:
+    #         for gpu in gpus:
+    #             tf.config.experimental.set_memory_growth(gpu, True)
+    #     except RuntimeError as e:
+    #         print(e)
+
+
     # ts=np.load("/usr1/home/s124mdg41_03/Integrated_package/DvsGes/event_array/train_set_eve_tune_1/Aug_dataset_labels_remove.npy")
     # params before tuning(commented)
     y0 = [20.06402, 20.31625, 20.55575]
@@ -55,23 +64,12 @@ if __name__ == '__main__':
                    [True, True, True, True, True, True, True, True, True, True, True],
                    [False, False, False, False, False, False, False, False, False, False, False]]
     from event_stream import polarity_process_transistor_conditions
+    from params_adjustment import dataset_generator_and_training
     for i in range(len(suffix)):
-        ap.dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
-                                      tune_choice=tune_choice[i],
-                                      suffix=suffix[i], if_only_train=False)
-    # ap.dataset_generator_and_training(
-    #                                   suffix="eve_tune_1", if_only_train=False)
+        dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
+                                  tune_choice=tune_choice[i],
+                                  suffix=suffix[i])
 
-    # import Visualization as vis
-    # # import improvement_tuning as it
-    # # it.add_polarity_process_transistor(8,True,False)
-    # vis.img_show(True, 1)
-    # vis.img_show(True,980)
-    # vis.img_show(True,980,True)
-    # g.analyze_accuracy_distribution("results",False)
-    # g.analyze_accuracy_distribution("results", True)
-    # g.analyze_accuracy_distribution("dec_results", False)
-    # g.analyze_accuracy_distribution("dec_results", True)
-    # import twice_event_stream as t
-    #
-    # print(t.destination_dir())
+
+
+
