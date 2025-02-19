@@ -306,7 +306,7 @@ def polar_remove_set7(aug):
     print('Pack and remove_end')
 
 
-def polar_remove_set7_load(aug):
+def polar_remove_set7_load(aug,randow_state,train_validation_rate):
     import os
     from event_stream import find_path
     root_dir, train_path, test_path = find_path()
@@ -339,9 +339,9 @@ def polar_remove_set7_load(aug):
     # #                                               np.mean(x_train[:1700,:,:,:])))
 
     x_train, x_test = frame_normalization(x_train, x_test)
-    seed = 42
+    seed = randow_state
     x_train, x_val, y_train, y_val = (
-        train_test_split(x_train, y_train, test_size=0.125, random_state=seed))
+        train_test_split(x_train, y_train, test_size=train_validation_rate, random_state=seed))
     return x_train, x_test, y_train, y_test, x_val, y_val
 
 

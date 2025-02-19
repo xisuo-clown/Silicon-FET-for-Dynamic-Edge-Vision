@@ -8,6 +8,7 @@
 # some of the gestures are under different frequency.
 # the accuracy is strongly rely on the memory length/gestures' frequency.
 # ############################################
+import os
 
 import numba as nb
 import math
@@ -17,7 +18,7 @@ import math
 # Path #####################
 def find_path():
     # Original event stream file path
-    root_dir = '/usr1/home/s124mdg41_03/Integrated_package/DvsGes'
+    root_dir = os.path.join(os.getcwd(),"DvsGes")
     # path for event array saving: train and test
     train_save_path = (root_dir + '/event_array/train_set_eve/')
     test_save_path = (root_dir + "/event_array/test_set_eve/")

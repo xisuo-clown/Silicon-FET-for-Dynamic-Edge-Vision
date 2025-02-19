@@ -46,12 +46,14 @@ if __name__ == '__main__':
     # event_stream.polarity_process_transistor_cal(train=True)
     # event_stream.polarity_process_transistor_cal(train=False)
     #
-    #event_stream.polarity_process_transistor_conditions(train=True)
-    #event_stream.polarity_process_transistor_conditions(train=False)
-
+    # event_stream.polarity_process_transistor_conditions(train=True)
+    # event_stream.polarity_process_transistor_conditions(train=False)
+    # import frames_processing
+    # frames_processing.gen_augmentation_frame()
+    # frames_processing.polar_remove_set7(aug=True)
     #
     # #
-    import frames_processing
+
     # # #
     # # # # #
     # # # # # # # origin data
@@ -62,9 +64,8 @@ if __name__ == '__main__':
     # # # #
     # # # #
     # # #
-    # # # # # # utilize augmented data
-    # frames_processing.gen_augmentation_frame()
-    # frames_processing.polar_remove_set7(aug=True)
+    # # # # # utilize augmented data
+
     # # #
     # #
     # # # ######################
@@ -81,13 +82,18 @@ if __name__ == '__main__':
         name = sys.argv[2]
     else:
         name="default_name_model.weights.h5"
-    from tools import find_gpu_with_min_usage
-    find_gpu_with_min_usage()
+
+    # from tools import find_gpu_with_min_usage
+    # find_gpu_with_min_usage()
     import resnet_10
     # # resnet_10.hyper_tuner(aug=True, tune=False)
 
     # resnet_10.hyper_tuner_for_times(aug=True, tune=False, model_path=name,times=5)
-    resnet_10.hyper_tuner_for_times(aug=True, tune=True, model_path=name,times=5)
+    for i in range(100):
+        try:
+            resnet_10.hyper_tuner_for_times(aug=True, tune=False, model_path=name,times=1)
+        except Exception as e:
+            print(e)
     # import resnet_10
     # resnet_10.load_existed_model();
     # import Logistic_Regression

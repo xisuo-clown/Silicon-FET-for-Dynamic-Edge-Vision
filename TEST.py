@@ -1,12 +1,16 @@
-
-
-
-
 if __name__ == '__main__':
     print("this is the beginning of the main function")
-    from tools import find_gpu_with_min_usage
+    import tensorflow as tf
 
-    find_gpu_with_min_usage()
+    # tf.config.set_visible_devices([], 'GPU')
+
+    # tf.debugging.set_log_device_placement(True)
+    import sys
+
+    print(sys.path)
+
+    # find_gpu_with_min_usage()
+
     import numpy as np
     from params_adjustment import calculate_match
 
@@ -17,7 +21,6 @@ if __name__ == '__main__':
     #             tf.config.experimental.set_memory_growth(gpu, True)
     #     except RuntimeError as e:
     #         print(e)
-
 
     # ts=np.load("/usr1/home/s124mdg41_03/Integrated_package/DvsGes/event_array/train_set_eve_tune_1/Aug_dataset_labels_remove.npy")
     # params before tuning(commented)
@@ -56,20 +59,23 @@ if __name__ == '__main__':
     a = 0.68193
     b = 11.48977
 
-
     para_after_tune = calculate_match(y0, A1, t1, A2, t2, A3, t3, d, a, b)
     # choosing which set to tune
-    suffix=["tune_for_eight","tune_for_all","no_tune"]
-    tune_choice = [[False, False, False, False, False, False, False, False, False, True, False],
-                   [True, True, True, True, True, True, True, True, True, True, True],
-                   [False, False, False, False, False, False, False, False, False, False, False]]
+    suffix = ["tune_for_all", "no_tune"]
+    tune_choice = [
+        [True, True, True, True, True, True, True, True, True, True, True],
+        [False, False, False, False, False, False, False, False, False, False, False]]
     from event_stream import polarity_process_transistor_conditions
     from params_adjustment import dataset_generator_and_training
+
     for i in range(len(suffix)):
+        # dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
+        #                                tune_choice=tune_choice[i],
+        #                                suffix=suffix[i])
         dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
-                                  tune_choice=tune_choice[i],
-                                  suffix=suffix[i])
+                                       tune_choice=tune_choice[i],
+                                       suffix=suffix[i],mode=True)
 
-
-
-
+    # dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
+    #                                tune_choice=tune_choice[1],
+    #                                suffix=suffix[1]+"_ori", mode=False)

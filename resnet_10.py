@@ -245,8 +245,8 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
         x_train, x_test, y_train, y_test, x_val, y_val = load_tuned_removed7(aug, random_state, train_validation_rate)
     else:
         from frames_processing import polar_remove_load, polar_remove_set7_load
-        # x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_set7_load(aug)
-        x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate)
+        x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_set7_load(aug,random_state,train_validation_rate)
+        # x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate)
 
     # random data
     # initial_learning_rate = random.uniform(0.01, 0.1)
@@ -273,12 +273,12 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     # #print the model# ############
     hypermodel.build(input_shape=(None, 128, 128, 2))
     hypermodel.build_graph().summary()
-    tf.keras.utils.plot_model(
-        hypermodel.build_graph(),  # here is the trick (for now)
-        to_file='model.png', dpi=96,  # saving
-        show_shapes=True, show_layer_names=True,  # show shapes and layer name
-        expand_nested=False  # will show nested block
-    )
+    # tf.keras.utils.plot_model(
+    #     hypermodel.build_graph(),  # here is the trick (for now)
+    #     to_file='model.png', dpi=96,  # saving
+    #     show_shapes=True, show_layer_names=True,  # show shapes and layer name
+    #     expand_nested=False  # will show nested block
+    # )
     # ################## learning rate scheduler
     import random
 
