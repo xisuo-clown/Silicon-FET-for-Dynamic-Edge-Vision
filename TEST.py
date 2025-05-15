@@ -1,81 +1,55 @@
 if __name__ == '__main__':
-    print("this is the beginning of the main function")
-    import tensorflow as tf
-
-    # tf.config.set_visible_devices([], 'GPU')
-
-    # tf.debugging.set_log_device_placement(True)
-    import sys
-
-    print(sys.path)
-
-    # find_gpu_with_min_usage()
-
+    import matplotlib.pyplot as plt
     import numpy as np
-    from params_adjustment import calculate_match
 
-    # gpus = tf.config.experimental.list_physical_devices('GPU')
-    # if gpus:
-    #     try:
-    #         for gpu in gpus:
-    #             tf.config.experimental.set_memory_growth(gpu, True)
-    #     except RuntimeError as e:
-    #         print(e)
+    # 定义模型名称、准确率和参数数目
+    models = ['mMND-BPTT', 'EGRU', 'AlexNet-LSTM', 'mMND-STDP', 'CNN-LSTM', 'CNN-SNN', 'Vanilla RNN', 'This Work(ResNet)', 'This Work(ResNet-LSTM)']
+    accuracies = [98, 97.8, 97.5, 96.6, 93.75, 93.4, 92.01, 94.78, 97.34]
+    params = [1.1, 4.8, 8.3, 0.81, 11.4, 2.32, 2.85,0.098,0.197]
 
-    # ts=np.load("/usr1/home/s124mdg41_03/Integrated_package/DvsGes/event_array/train_set_eve_tune_1/Aug_dataset_labels_remove.npy")
-    # params before tuning(commented)
-    y0 = [20.06402, 20.31625, 20.55575]
-    A1 = [6.30373, 6.65462, 9.10203]
-    t1 = [1.49676E-5, 1.93912E-5, 2.84333E-5]
-    A2 = [4.72692, 4.61784, 2.19681]
-    t2 = [8.72838E-5, 1.09493E-4, 2.77744E-4]
-    A3 = [0.5666, 0.45408, 0.59678]
-    t3 = [0.01394, 0.12556, 1.29371]
-    d = [28.81179, 29.65465, 30.59423]
-    a = 0.89091
-    b = 6.78201
-    para_before_tune = calculate_match(y0, A1, t1, A2, t2, A3, t3, d, a, b)
-    # params being adjusted (commented)
-    # y0 = [20.01978, 20.42166, 20.75204]
-    # A1 = [5.15863, 7.37592, 7.96576]
-    # t1 = [7.53665E-5, 2.2508E-5, 2.60293E-5]
-    # A2 = [5.13078, 2.82181, 2.64961]
-    # t2 = [1.32347E-5, 1.52147E-4, 1.96754E-4]
-    # A3 = [0.35981, 0.35254, 0.38272]
-    # t3 = [0.02205, 0.31306, 0.25639]
-    # d = [27.9274791, 28.8670617, 29.73755545]
-    # a = 0.68193
-    # b = 11.48977
+    rnn_indices = [1,2,4, 6]  # mMND-BPTT, EGRU, Vanilla RNN
+    cnn_indices = [0, 3, 5]  # AlexNet-LSTM, CNN-LSTM, CNN-SNN
 
-    # params after tuning(commented)
-    y0 = [20.01978, 20.42166, 20.75204]
-    A1 = [5.15863, 7.37592, 7.96576]
-    t1 = [7.53665E-5, 2.2508E-5, 2.60293E-5]
-    A2 = [5.13078, 2.82181, 2.64961]
-    t2 = [1.32347E-5, 1.52147E-4, 1.96754E-4]
-    A3 = [0.35981, 0.35254, 0.38272]
-    t3 = [0.02205, 0.31306, 0.25639]
-    d = [27.9274791, 28.8670617, 29.73755545]
-    a = 0.68193
-    b = 11.48977
+    # 创建图像
+    plt.figure(figsize=(10, 6))
+    x_off=0.35
+    y_off=0.1
+    # 绘制 RNN 模型的散点，颜色为绿色
+    for i in rnn_indices:
+        plt.scatter(accuracies[i], params[i], color='green')
+        plt.text(accuracies[i]+x_off, params[i]+y_off*params[i], models[i], fontsize=8, ha='right', color='black')
 
-    para_after_tune = calculate_match(y0, A1, t1, A2, t2, A3, t3, d, a, b)
-    # choosing which set to tune
-    suffix = ["tune_for_all", "no_tune"]
-    tune_choice = [
-        [True, True, True, True, True, True, True, True, True, True, True],
-        [False, False, False, False, False, False, False, False, False, False, False]]
-    from event_stream import polarity_process_transistor_conditions
-    from params_adjustment import dataset_generator_and_training
+    # 绘制 CNN 模型的散点，颜色为蓝色
+    for i in cnn_indices:
+        if models[i] == 'mMND-BPTT':
+            plt.scatter(accuracies[i], params[i], color='blue')
+            plt.text(accuracies[i] + x_off-0.1, params[i] + y_off * params[i], models[i], fontsize=8, ha='right',
+                     color='black')
+            continue
+        plt.scatter(accuracies[i], params[i], color='blue')
+        plt.text(accuracies[i]+x_off, params[i]+y_off*params[i], models[i], fontsize=8, ha='right', color='black')
 
-    for i in range(len(suffix)):
-        # dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
-        #                                tune_choice=tune_choice[i],
-        #                                suffix=suffix[i])
-        dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
-                                       tune_choice=tune_choice[i],
-                                       suffix=suffix[i],mode=True)
+    # 绘制其他模型的散点
+    for i in range(len(models)):
+        if i not in rnn_indices and i not in cnn_indices:
+            plt.scatter(accuracies[i], params[i], color='orange')
+            plt.text(accuracies[i]+x_off, params[i]+y_off*params[i], models[i], fontsize=8, ha='right', color='black')
 
-    # dataset_generator_and_training(para_before_tune=para_before_tune, para_after_tune=para_after_tune,
-    #                                tune_choice=tune_choice[1],
-    #                                suffix=suffix[1]+"_ori", mode=False)
+    # 设置坐标轴标签
+    plt.ylabel('Parameters (M)')
+    plt.xlabel('Accuracy (%)')
+
+    # 设置y轴为对数刻度
+    plt.yscale('log')
+
+    # 设置y轴刻度只显示 1 和 10
+    plt.yticks([1, 10], ['1', '10'])
+
+    # 设置标题
+    plt.title('Model Accuracy vs Parameters')
+
+    # 显示图形
+    plt.show()
+
+
+

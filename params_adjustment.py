@@ -43,13 +43,13 @@ def frame_normalization(x_train, x_test):
     max_value = np.max(x_test)
     min_value = np.min(x_test)
     print('test set max {0}, min {1}'.format(max_value, min_value))
-    x_train_mean=np.mean(x_train,axis=(1,2),keepdims=True)
-    x_train_std=np.std(x_train,axis=(1,2),keepdims=True)
-    x_test_mean=np.mean(x_test,axis=(1,2),keepdims=True)
-    x_test_std=np.std(x_test,axis=(1,2),keepdims=True)
-    #with normalization
-    x_train = (x_train - x_train_mean)/x_train_std
-    x_test = (x_test - x_test_mean)/x_test_std
+    x_train_mean = np.mean(x_train, axis=(1, 2), keepdims=True)
+    x_train_std = np.std(x_train, axis=(1, 2), keepdims=True)
+    x_test_mean = np.mean(x_test, axis=(1, 2), keepdims=True)
+    x_test_std = np.std(x_test, axis=(1, 2), keepdims=True)
+    # with normalization
+    x_train = (x_train - x_train_mean) / x_train_std
+    x_test = (x_test - x_test_mean) / x_test_std
 
     print(np.max(x_test), np.max(x_train))
 
@@ -72,7 +72,7 @@ def evaluate_models(suffix):
     """
     root_dir, train_save_path, test_save_path = find_path(suffix)
     # 获取当前目录下所有 .h5 模型文件
-    model_files = glob.glob(os.path.join(os.path.join(test_save_path,"test_results"), "*.h5"))
+    model_files = glob.glob(os.path.join(os.path.join(test_save_path, "test_results"), "*.h5"))
 
     # 加载测试数据
     x_test = np.load(os.path.join(test_save_path, "dataset_features_remove.npy"))
@@ -91,9 +91,7 @@ def evaluate_models(suffix):
         # 预测
         y_pred = model.predict(x_test)
         accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
-        plot_cm(y_test,y_pred,accuracy,)
-
-
+        plot_cm(y_test, y_pred, accuracy, )
 
 
 ######CONFIGURATION################
@@ -101,7 +99,7 @@ def evaluate_models(suffix):
 def find_path(suffix: str):
     # Original event stream file path
     import os
-    root_dir = os.getcwd()+'\DvsGes'
+    root_dir = os.path.join(os.getcwd(),'DvsGes')
     # path for event array saving: train and test
     train_save_path = (root_dir + '/event_array/train_set_' + suffix + '/')
     test_save_path = (root_dir + '/event_array/test_set_' + suffix + '/')
@@ -317,7 +315,7 @@ def polarity_process_transistor_conditions(train: bool, para_before_tune, para_a
     import time
     begin = time.time()
     indexarr = index_arr()
-    train_set_eve, test_set_eve = init_event(suffix)
+    train_set_eve, test_set_eve = init_event(suffix=suffix)
     root_dir, train_save_path, test_save_path = find_path(suffix)
     if train:
         set_eve = train_set_eve
@@ -341,7 +339,6 @@ def polarity_process_transistor_conditions(train: bool, para_before_tune, para_a
     i_d_after_tune = para_after_tune
     i_d_table = [i_d_before_tune, i_d_after_tune]
     for n in tqdm(range(data_num), desc="process"):
-        output_arr = np.empty((128, 128, 2))
         event, label = set_eve[n]
         if label != 2:
             i_d = i_d_table[int(tune_choice[label])]
@@ -352,6 +349,7 @@ def polarity_process_transistor_conditions(train: bool, para_before_tune, para_a
             # for d in range(30):
             for d in range(n_num):
                 label_arr.append(label)
+                output_arr = np.empty((128, 128, 2))
                 # pos_events_dict = dict_pos[d]
                 # neg_events_dict = dict_neg[d]
                 for polar in range(2):
@@ -401,6 +399,7 @@ def polarity_process_transistor_conditions(train: bool, para_before_tune, para_a
     # Events stream transform into array in n.npy, print arrays to visualize frames
     return
 
+
 import multiprocessing
 
 import multiprocessing
@@ -408,105 +407,101 @@ import numpy as np
 import time
 from tqdm import tqdm
 
+def process_data_chunk(chunk):
+    """ 处理单个数据块，并返回成功的任务编号 """
+    n, set_eve, indexarr, tune_choice, i_d_table,  save_path,len_label2 = chunk
+    event, label = set_eve[n]
+    temp_save=[[],[]]
+    if label != 2:
+        if label>2:
+            n-=len_label2
+        i_d = i_d_table[int(tune_choice[label])]
+        dict_pos_time, dict_neg_time, label = polar_save_as_list(set_eve, n, indexarr)
+        dict_list = [dict_pos_time, dict_neg_time]
 
-# def process_data_chunk(chunk):
-#     """ 处理单个数据块，并返回成功的任务编号 """
-#     n, set_eve, indexarr, tune_choice, i_d_table,  save_path,len_label2 = chunk
-#     event, label = set_eve[n]
-#     temp_save=[[],[]]
-#     if label != 2:
-#         if label>2:
-#             n-=len_label2
-#         i_d = i_d_table[int(tune_choice[label])]
-#         dict_pos_time, dict_neg_time, label = polar_save_as_list(set_eve, n, indexarr)
-#         dict_list = [dict_pos_time, dict_neg_time]
-#
-#         for d in range(n_num):
-#             output_arr = np.empty((128, 128, 2))
-#             for polar in range(2):
-#                 temp_save[polar] = []
-#                 events_dict = dict_list[polar][d]
-#                 for i in range(128 * 128):
-#                     if events_dict[i]:
-#                         id_last = i_d.d[0]
-#                         for j in events_dict[i]:
-#                             y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b = i_d.get_para(id_last)
-#                             id_b, id_a = id_time_new(id_last, j, y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b)
-#                             if j != events_dict[i][-1]:
-#                                 id_last = id_a
-#                             else:
-#                                 id_last = id_b
-#                         temp_save[polar].append(max(id_last - 15.2, 0))
-#                     else:
-#                         temp_save[polar].append(0)
-#
-#                 for k in range(128):
-#                     for m in range(128):
-#                         output_arr[k, m, polar] = temp_save[polar][int(indexarr[m][k])]
-#             np.save(save_path + "{0}.npy".format(n*3+d), output_arr)
-#
-#         return n  # 返回任务编号表示成功
-#     return None  # 失败返回 None
-#
-#
-# def polarity_process_transistor_conditions(train: bool, para_before_tune, para_after_tune, suffix: str,
-#                                            tune_choice: list):
-#
-#     indexarr = index_arr()
-#     train_set_eve, test_set_eve = init_event(suffix)
-#     root_dir, train_save_path, test_save_path = find_path(suffix)
-#
-#     if train:
-#         set_eve = train_set_eve
-#         data_num = 1176
-#         save_path = train_save_path
-#     else:
-#         set_eve = test_set_eve
-#         data_num = 288
-#         save_path = test_save_path
-#     len_label2=len([v for v in set_eve.targets if v==2])
-#     pos_temp_save = []
-#     neg_temp_save = []
-#     temp_save = [pos_temp_save, neg_temp_save]
-#     label_arr=[label for event, label in set_eve if label!=2]
-#     tmp_arr=[]
-#     for label in label_arr:
-#         tmp_arr.extend([label]*3)
-#     label_arr=tmp_arr
-#     i_d_table = [para_before_tune, para_after_tune]
-#     tasks = [(n, set_eve, indexarr, tune_choice, i_d_table, save_path,len_label2) for n in range(data_num)]
-#     multiprocess_pool(process_data_chunk,tasks,f"if train:{str(train)}")
-#     np.save(save_path + "dataset_labels.npy", label_arr)
-#
-#
-# def multiprocess_pool(func,tasks,type="event stream"):
-#     begin = time.time()
-#     pool = multiprocessing.Pool(processes=multiprocessing.cpu_count()//3)
-#     results=[]
-#     with tqdm(total=len(tasks), desc=f"Processing for {type}", dynamic_ncols=True) as pbar:
-#         for task in tasks:
-#             results.append(pool.apply_async(func, args=(task,)))
-#         failed_tasks=0
-#         for result in results:
-#             if result.get() is None:
-#                 failed_tasks += 1
-#             pbar.update(1)
-#     # with tqdm(total=len(tasks), desc=f"Processing for {type}", dynamic_ncols=True) as pbar:
-#     #     for _ in pool.imap_unordered(func, tasks):
-#     #         pbar.update(1)  # 每完成一个任务，进度条 +1
-#
-#     pool.close()
-#     pool.join()
-#     end = time.time()
-#     print(f"Total processing time for {type}: {end - begin:.2f} seconds")
+        for d in range(n_num):
+            output_arr = np.empty((128, 128, 2))
+            for polar in range(2):
+                temp_save[polar] = []
+                events_dict = dict_list[polar][d]
+                for i in range(128 * 128):
+                    if events_dict[i]:
+                        id_last = i_d.d[0]
+                        for j in events_dict[i]:
+                            y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b = i_d.get_para(id_last)
+                            id_b, id_a = id_time_new(id_last, j, y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b)
+                            if j != events_dict[i][-1]:
+                                id_last = id_a
+                            else:
+                                id_last = id_b
+                        temp_save[polar].append(max(id_last - 15.2, 0))
+                    else:
+                        temp_save[polar].append(0)
+
+                for k in range(128):
+                    for m in range(128):
+                        output_arr[k, m, polar] = temp_save[polar][int(indexarr[m][k])]
+            np.save(save_path + "{0}.npy".format(n*3+d), output_arr)
+
+        return n  # 返回任务编号表示成功
+    return None  # 失败返回 None
+
+
+def polarity_process_transistor_conditions_speedup(train: bool, para_before_tune, para_after_tune, suffix: str,
+                                           tune_choice: list):
+
+    indexarr = index_arr()
+    train_set_eve, test_set_eve = init_event(suffix=suffix)
+    root_dir, train_save_path, test_save_path = find_path(suffix)
+
+    if train:
+        set_eve = train_set_eve
+        data_num = 1176
+        save_path = train_save_path
+    else:
+        set_eve = test_set_eve
+        data_num = 288
+        save_path = test_save_path
+    len_label2=len([v for v in set_eve.targets if v==2])
+    pos_temp_save = []
+    neg_temp_save = []
+    temp_save = [pos_temp_save, neg_temp_save]
+    label_arr=[label for event, label in set_eve if label!=2]
+    tmp_arr=[]
+    for label in label_arr:
+        tmp_arr.extend([label]*3)
+    label_arr=tmp_arr
+    i_d_table = [para_before_tune, para_after_tune]
+    tasks = [(n, set_eve, indexarr, tune_choice, i_d_table, save_path,len_label2) for n in range(data_num)]
+    multiprocess_pool(process_data_chunk,tasks,f"if train:{str(train)}")
+    np.save(save_path + "dataset_labels.npy", label_arr)
+
+
+def multiprocess_pool(func,tasks,type="event stream"):
+    begin = time.time()
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count()//3)
+    results=[]
+    with tqdm(total=len(tasks), desc=f"Processing for {type}", dynamic_ncols=True) as pbar:
+        for task in tasks:
+            results.append(pool.apply_async(func, args=(task,)))
+        failed_tasks=0
+        for result in results:
+            if result.get() is None:
+                failed_tasks += 1
+            pbar.update(1)
+    # with tqdm(total=len(tasks), desc=f"Processing for {type}", dynamic_ncols=True) as pbar:
+    #     for _ in pool.imap_unordered(func, tasks):
+    #         pbar.update(1)  # 每完成一个任务，进度条 +1
+
+    pool.close()
+    pool.join()
+    end = time.time()
+    print(f"Total processing time for {type}: {end - begin:.2f} seconds")
 
 
 from tqdm import tqdm
 import numpy as np
 import time
-
-
-
 
 
 # Supplementary###########################################################
@@ -589,7 +584,7 @@ def id_num_exp(i_d, t1, y1):
 
 class calculate_match:
     def __init__(self, y0: list, a1: list, t1: list, a2: list, t2: list, a3: list, t3: list,
-                 d: list, a: float, b: float, id_0:float=0,id_th:float=0):
+                 d: list, a: float, b: float, id_0: float = 0, id_th: float = 0):
 
         self.y0 = y0
         self.A1 = a1
@@ -720,6 +715,7 @@ def gen_augmentation_frame(suffix: str):
     end = time.time()
     print(end - begin)
 
+
 # def gen_augmentation_frame(suffix: str):
 #     import os
 #     import numpy as np
@@ -757,9 +753,6 @@ def gen_augmentation_frame(suffix: str):
 #     # os.remove(path)
 #
 #     np.save(train_path + "Aug_{}.npy".format(i), x)
-
-
-
 
 
 def aug_process(x_train, y_train: int):
@@ -825,17 +818,18 @@ def gen_stack_frame(Aug: bool, suffix):
         for i in tqdm(range(len(y)), desc="Stack_{}".format(name_type[j])):
             path = os.path.join(path_type[j], f'{name_load[j]}{i}.npy')
             x = np.load(path, allow_pickle=True)
-            if x.ndim < 4:
+            if x.ndim < 5:
                 x = expand_dims(x, axis=0)
+                print("expanded for x")
             y_1 = np.full(a, y[i])
 
             # stack (creating a initial array)
             if i != 0:
-                x_0[i * a:(i + 1) * a, :, :, :] = x
+                x_0[i * a:(i + 1) * a,:, :, :] = x
                 y_0[i * a:(i + 1) * a, ] = y_1
                 # print(y_0.shape)
             else:
-                x_0 = np.zeros((len(y) * a, 128, 128, 2))
+                x_0 = np.zeros((len(y) * a,128, 128, 2))
                 y_0 = np.zeros((len(y) * a,))
                 x_0[0:a, :, :, :] = x
                 y_0[0:a, ] = y_1
@@ -977,12 +971,14 @@ class ResnetBlock(Model):
         # if not perform down sample, then add a shortcut directly
         x = self.merge([x, res])
         out = tf.nn.relu(x)
+
+        self.out1 = out
         return out
 
 
 class ResNet18(Model):
 
-    def __init__(self, num_classes, **kwargs):
+    def __init__(self, num_classes,resnet_num=3,**kwargs):
         """
             num_classes: number of classes in specific classification task.
         """
@@ -1019,13 +1015,12 @@ class ResNet18(Model):
 
         self.res_4_1 = ResnetBlock(filters[2], k[4], down_sample=True)
         self.res_4_2 = ResnetBlock(filters[2], k[5])
-
+        self.resnet_num=resnet_num
         self.avg_pool = GlobalAveragePooling2D()
         self.merge = Add()
         self.flat = Flatten()
         self.fc = Dense(num_classes, activation="softmax")
         # self.fc = Dense(10, activation="softmax")
-
     def call(self, inputs):
         out = self.conv_1(inputs)
         out = self.init_bn(out)
@@ -1057,6 +1052,7 @@ class ResNet18(Model):
 
         # # dvs animals remove res3_1
         #
+
         # out = self.res_2_2(out)
         # out = self.res_3_1(out)
         # out = self.res_3_2(out)
@@ -1067,12 +1063,13 @@ class ResNet18(Model):
         out = self.fc(out)
         return out
 
+
     def build_graph(self):
         x = Input(shape=(128, 128, 2))
         return Model(inputs=[x], outputs=self.call(x))
 
 
-def hyper_tuner_for_times(aug, tune, model_path, times: int, dir_name: str, suffix: str,mode:bool=True):
+def hyper_tuner_for_times(aug, tune, model_path, times: int, dir_name: str, suffix: str, mode: bool = True,resnet_num:int=3):
     random_state = random.randint(1, 1000)
     train_validation_rate = random.uniform(0.1, 0.2)
     initial_learning_rate = random.uniform(0.01, 0.1)
@@ -1086,10 +1083,10 @@ def hyper_tuner_for_times(aug, tune, model_path, times: int, dir_name: str, suff
         name = datetime.now().strftime("%Y%m%d_%H%M%S")
     for i in range(times):
         hyper_tuner(aug, tune, model_path, name + f"_{i}", random_state, train_validation_rate, initial_learning_rate,
-                    decay_steps, decay_rate, STEPS, dir_name, suffix,mode)
+                    decay_steps, decay_rate, STEPS, dir_name, suffix, mode,resnet_num)
 
 
-def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix="str",mode=True):
+def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix="str", mode=True):
     import os
     root_dir, train_path, test_path = find_path(suffix)
     # processing
@@ -1141,23 +1138,53 @@ def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix=
     #     if
 
     # x_train, y_train = shuffle(x_tra, y_tra, random_state=seed)
+    # x_train, y_train=remove_set(x_train,y_train,[i for i in range(8)])
+    # x_train, y_train=remove_set(x_train, y_train, [7],True)
+    # x_train, y_train = remove_set(x_train, y_train, [i for i in range(10)], True)
     if mode:
-        x_train, x_test=frame_normalization(x_train, x_test)
+        # x_train, x_test = frame_normalization(x_train, x_test)
+        x_train = enhance_brightness(x_train, y_train,0.9)
+        x_test = enhance_brightness(x_test, y_test,0.9)
+    print_len_for_each_label(y_train)
+    print_len_for_each_label(y_test)
+
     seed = 42
+
+
+
     from sklearn.model_selection import train_test_split
     x_train, x_val, y_train, y_val = (
-        train_test_split(x_train, y_train, test_size=train_validation_rate, random_state=random_state))
+        train_test_split(x_train, y_train, test_size=train_validation_rate, random_state=random_state,stratify=y_train))
     return x_train, x_test, y_train, y_test, x_val, y_val
+
+
+def print_len_for_each_label(y_train):
+    for i in range(10):
+        print("length of label {}: {}".format(i, np.sum(y_train == i)))
+
+
+def remove_set(x_train, y_train, n:list,random_choice:bool=True):
+    mask=np.ones(len(y_train),dtype=bool)
+    for i in n:
+        true_indices = np.where(y_train==i)[0]
+        if random_choice:
+            true_indices=np.random.choice(true_indices, len(true_indices) *1 // 2, replace=False)
+        else:
+            true_indices=true_indices[:len(true_indices)//2]
+        mask[true_indices]=False
+    return x_train[mask],y_train[mask]
 
 
 # #########build model############################################
 def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate, initial_learning_rate, decay_steps,
-                decay_rate, STEPS, dir_name, suffix,mode=True):
+                decay_rate, STEPS, dir_name, suffix, mode=True,resnet_num=3):
     import time
     start = time.time()
     import random
     txt_data = {}
     txt_name = "20241103_002953"
+    random_state = 86
+    train_validation_rate = 0.125
     # with open(f"./{dir_name}/{txt_name}.txt", "r", encoding="utf-8") as file:
     #     for line in file:
     #         if "accuracy" not in line and "tune" not in line:
@@ -1173,14 +1200,20 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     # random_state=txt_data["random_seed"]
     # train_validation_rate=txt_data["test_size"]
 
-    x_train, x_test, y_train, y_test, x_val, y_val =  polar_remove_load(aug, random_state, train_validation_rate, suffix,mode)
+    x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate, suffix,
+                                                                       mode)
+    # import tensorflow as tf
+
+    # 确保数据在 CPU，而不是 GPU
+    # with tf.device('/CPU:0'):
+    #     x_train, y_train = x_train, y_train
 
     # random data
     # initial_learning_rate = random.uniform(0.01, 0.1)
     # decay_steps = random.randint(1000, 5000)
     # decay_rate = random.uniform(0.1, 1)
     # STEPS = random.randint(100, 200)
-    bs = int(len(x_train) / STEPS)
+    bs = 100
     print("batch size: ", bs)
     # # load existed data
     # initial_learning_rate = txt_data["initial_learning_rate"]
@@ -1195,7 +1228,9 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
           (x_train.shape, x_val.shape, x_test.shape))
     # ########residual##########################
     from keras.callbacks import EarlyStopping
-    hypermodel = ResNet18(10)
+    hypermodel = ResNet18(10,resnet_num)
+    # from tensorflow.keras.applications import ResNet50
+    # hypermodel=ResNet50(weights='imagenet', include_top=False, input_tensor=Input(shape=(128, 128, 2)))
     # hypermodel=None_ResnetBlock(2);
     # #print the model# ############
     hypermodel.build(input_shape=(None, 128, 128, 2))
@@ -1208,7 +1243,9 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     # )
     # ################## learning rate scheduler
     import random
-
+    initial_learning_rate = 0.01
+    decay_steps = 5000
+    decay_rate = 0.5
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         # initial_learning_rate,
         initial_learning_rate=initial_learning_rate,
@@ -1255,13 +1292,10 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                      save_weights_only=True,
                                                      verbose=1)
-    # if aug:
-    #     # bs = 170
-    #     bs = 340
-    # else:
-    #     bs = 45
-    # STEPS = len(train_n) / bs
-    # STEPS = 170
+
+    STEPS = 128
+    bs = int(len(x_train) / STEPS)
+
 
     history = hypermodel.fit(x_train, y_train, batch_size=bs, steps_per_epoch=STEPS,
                              # epochs=140,
@@ -1318,6 +1352,23 @@ def hyper_tuner(aug, tune, model_path, name, random_state, train_validation_rate
     print('Training time: ', end - start)
 
     return x_train, x_val, x_test, y_train, y_val, y_test
+
+def enhance_brightness(x,y,enhanced_factor=1.2):
+    x[y == 8] *= enhanced_factor
+    return x
+
+def between_class_variance(X, y):
+    unique_classes = np.unique(y)  # 获取所有类别
+    overall_mean = np.mean(X, axis=0)  # 计算整体均值
+    BCV = 0  # 初始化类间方差
+
+    for c in unique_classes:
+        X_c = X[y == c]  # 获取类别 c 的数据
+        N_c = X_c.shape[0]  # 该类别的样本数
+        mu_c = np.mean(X_c, axis=0)  # 该类别的均值
+        BCV += N_c * np.sum((mu_c - overall_mean) ** 2)  # 计算类间方差
+
+    return BCV
 
 
 def plot_cm(y_test, y_pred, accuracy, name, results):
@@ -1398,14 +1449,19 @@ def dataset_generator_and_training(para_before_tune, para_after_tune, tune_choic
                                    mode=True):
     root_dir, train_save_path, test_save_path = find_path(suffix)
     import os
+
+    # check_for_files("tune_for_none","tune_for_nine")
+
     if mode:
-        results_path="test_results"
+        results_path = "test_results"
     else:
-        results_path="test_results_no_normalization"
+        results_path = "test_results_no_normalization"
     results_save_path = os.path.join(test_save_path, results_path)
     if not os.path.exists(os.path.join(train_save_path, "Aug_dataset_labels_remove.npy")):
         polarity_process_transistor_conditions(True, para_before_tune, para_after_tune, suffix, tune_choice)
         polarity_process_transistor_conditions(False, para_before_tune, para_after_tune, suffix, tune_choice)
+        # polarity_process_transistor_conditions_speedup(True, para_before_tune, para_after_tune, suffix, tune_choice)
+        # polarity_process_transistor_conditions_speedup(False, para_before_tune, para_after_tune, suffix, tune_choice)
         params = vars(para_after_tune)
         import os
         save_params_to_file(os.path.join(train_save_path, "params.txt"), **params)
@@ -1415,16 +1471,15 @@ def dataset_generator_and_training(para_before_tune, para_after_tune, tune_choic
 
     os.makedirs(results_save_path, exist_ok=True)
 
-
-    save_contrast(train_save_path,test_save_path)
-
+    # save_contrast(train_save_path, test_save_path)
+    set_file_len=50
     while True:
         try:
             len_files = len(os.listdir(results_save_path)) // 5
-            if len_files<10:
-                print("training for {} round {}".format(suffix,len_files))
+            if len_files < set_file_len:
+                print("training for {} round {}".format(suffix, len_files))
                 # hyper_tuner_for_times(True, False, "results", 1, results_save_path, suffix)
-                hyper_tuner_for_times(True, False, "results", 1, results_save_path, suffix,False)
+                hyper_tuner_for_times(True, False, "results", 1, results_save_path, suffix, mode)
                 time.sleep(30)
             else:
                 print("training for {} is over".format(suffix))
@@ -1433,15 +1488,53 @@ def dataset_generator_and_training(para_before_tune, para_after_tune, tune_choic
             print(e)
 
 
-def save_contrast(train_save_path,test_save_path):
+def check_for_files(suffix1,suffix2):
+    idx = []
+    label_idx=[]
+    root_dir, train_save_path_1, test_save_path_1 = find_path(suffix1)
+    root_dir, train_save_path_2, test_save_path_2 = find_path(suffix2)
+    try:
+        for i in range(3300):
+            file1 = os.path.join(train_save_path_1, "{}.npy".format(i))
+            file2 = os.path.join(train_save_path_2, "{}.npy".format(i))
+            if not compare_files(file1, file2, hash_algorithm='md5'):
+                idx.append(i)
+    except Exception as e:
+        print("no such file",e)
+    label1 = np.load(os.path.join(train_save_path_1, "dataset_labels.npy"))
+    label2 = np.load(os.path.join(train_save_path_2, "dataset_labels.npy"))
+    label_idx=[i for i in range(len(label1)) if label1[i]!=label2[i]]
+    print("files contents are different for train: ", idx)
+    print("files labels are different for train: ", label_idx)
+    idx = []
+    label_idx = []
+    root_dir, train_save_path_1, test_save_path_1 = find_path(suffix1)
+    root_dir, train_save_path_2, test_save_path_2 = find_path(suffix2)
+    try:
+        for i in range(3300):
+            file1 = os.path.join(test_save_path_1, "{}.npy".format(i))
+            file2 = os.path.join(test_save_path_2, "{}.npy".format(i))
+            if not compare_files(file1, file2, hash_algorithm='md5'):
+                idx.append(i)
+    except Exception as e:
+        print("no such file", e)
+    label1 = np.load(os.path.join(test_save_path_1, "dataset_labels.npy"))
+    label2 = np.load(os.path.join(test_save_path_2, "dataset_labels.npy"))
+    label_idx = [i for i in range(len(label1)) if label1[i] != label2[i]]
+    print("files contents are different for test: ", idx)
+    print("files labels are different for test: ", label_idx)
+
+
+def save_contrast(train_save_path, test_save_path):
     x_train = np.load(os.path.join(train_save_path, "Aug_dataset_features_remove.npy"), allow_pickle=True)
     y_train = np.load(os.path.join(train_save_path, "Aug_dataset_labels_remove.npy"), allow_pickle=True)
-    cst=cal_contrast(x_train, y_train)
+    cst = cal_contrast(x_train, y_train)
     with open(os.path.join(test_save_path, "contrast.txt"), "w") as f:
-        for k,v in cst.items():
+        for k, v in cst.items():
             f.write(f"{k}:{v}\n")
 
-def cal_contrast(x_train,y_train):
+
+def cal_contrast(x_train, y_train):
     counter = Counter(y_train)
     print(counter)
     x_for_each_label = {i: [] for i in range(10)}
@@ -1450,19 +1543,18 @@ def cal_contrast(x_train,y_train):
     for k, v in x_for_each_label.items():
         cst = np.empty(2)
         for j in v:
-            cst += np.std(j, axis=(0, 1))/np.mean(j,axis=(0, 1))
+            cst += np.std(j, axis=(0, 1)) / np.mean(j, axis=(0, 1))
         cst /= len(v)
-        contrast[k]=cst*10
+        contrast[k] = cst * 10
     overall_contrast = 0
-    for k,v in contrast.items():
-            overall_contrast+=np.mean(v)
-    contrast['overall_contrast']=overall_contrast/20
+    for k, v in contrast.items():
+        overall_contrast += np.mean(v)
+    contrast['overall_contrast'] = overall_contrast / 20
     print(contrast)
     return contrast
 
 
-
-def plot_gaussian_distribution(data,title,save_path=None):
+def plot_gaussian_distribution(data, title, save_path=None):
     # 计算均值和标准差
     mean = np.mean(data)
     std_dev = np.std(data)
@@ -1489,7 +1581,7 @@ def plot_gaussian_distribution(data,title,save_path=None):
 
 def show_fig(data):
     import matplotlib.pyplot as plt
-    output_arr=data
+    output_arr = data
     import matplotlib.cm as cm
     tags = ['Positive', 'Negative']
     cmap = 'viridis'
@@ -1528,3 +1620,18 @@ def show_fig(data):
     plt.imshow(output_arr[:, :, 1], cmap=cmap)
     plt.colorbar(plt.imshow(output_arr[:, :, 1]), cmap=cmap)
     plt.show()
+
+
+import hashlib
+
+def file_hash(file_path, hash_algorithm='md5'):
+    """计算文件的哈希值"""
+    hash_func = hashlib.new(hash_algorithm)
+    with open(file_path, 'rb') as f:
+        while chunk := f.read(8192):  # 逐块读取文件
+            hash_func.update(chunk)
+    return hash_func.hexdigest()
+
+def compare_files(file1, file2, hash_algorithm='md5'):
+    """比较两个文件的哈希值"""
+    return file_hash(file1, hash_algorithm) == file_hash(file2, hash_algorithm)

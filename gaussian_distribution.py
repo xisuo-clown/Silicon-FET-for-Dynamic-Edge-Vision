@@ -17,8 +17,49 @@ def extract_accuracy_values(folder_path,tune:bool):
                     accuracy_values.extend(map(float, matches))
     return accuracy_values
 
+def plot_table(data,title):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # 示例数据
+    arr = np.array(data)
+    arr = np.insert(arr, 0, title)
+    # 创建画布
+    fig, ax = plt.subplots(figsize=(5, 2))
+    ax.axis("tight")
+    ax.axis("off")
+
+    # 创建表格
+    table_data = [[val] for val in arr]  # 变成二维列表，每个元素都是单独的一行
+    table = ax.table(cellText=table_data, colLabels=["Values"], loc="center")
+
+    plt.show()
+
 
 # 绘制高斯分布
+def plot_distribution(data,label,title):
+    color_table=['r','g','b','c','m','y','k']
+    i=0
+    for d in data:
+        mean = np.mean(d)
+        std_dev = np.std(d)
+        import seaborn as sns
+        # 绘制直方图
+        sns.kdeplot(d, fill=True, alpha=0.5, label=label[i], color=color_table[i])
+        plt.axvline(mean, color=color_table[i], linestyle='dashed', linewidth=2, label=f'Mean: {mean:.3f}\nVariance: {std_dev:.3f}')
+        i+=1
+
+
+
+
+        # 添加图例和标签
+
+    plt.title('Distribution Curve of {}'.format(title))
+    plt.xlabel(title)
+    plt.ylabel('Density')
+    plt.legend()
+    plt.show()
+
 def plot_gaussian_distribution(data):
     # 计算均值和标准差
     mean = np.mean(data)

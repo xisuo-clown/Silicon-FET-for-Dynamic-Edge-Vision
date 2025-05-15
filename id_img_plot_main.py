@@ -1,4 +1,6 @@
 import os.path
+import random
+from collections import defaultdict
 
 import numpy as np
 from tqdm import tqdm
@@ -22,6 +24,8 @@ if __name__ == '__main__':
     A3 = [0.5666, 0.45408, 0.59678]
     t3 = [0.01394, 0.12556, 1.29371]
     d = [28.81179, 29.65465, 30.59423]
+    for i in range(3):
+        print(d[i],',',A1[i],',',t1[i],',',A2[i],',',t2[i],',',A3[i],',',t3[i],',',y0[i])
     a = 0.89091
     b = 6.78201
     id_0 = 0
@@ -67,21 +71,44 @@ if __name__ == '__main__':
     para_after_tune_without_lower_current_limit = calculate_match(y0, A1, t1, A2, t2, A3, t3, d, a, b, id_0, id_th)
 
     idx = 999
-
+    pic_num=[69,125,331,451,532,597,695,896,1062,1098]
     dataset = id_verse_time.Dataset()
+    from gaussian_distribution import plot_gaussian_distribution,plot_distribution,plot_table
+    # plot_gaussian_distribution(dataset.fre_count[0])
+    # plot_gaussian_distribution(dataset.fre_count[8])
+    data=[dataset.fre_count[0],dataset.fre_count[8]]
+    label=["class 1","class 9"]
+    plot_distribution(data,label,"events per second")
+    fre_mean=[0 for _ in range(10)]
+    # for i in range(10):
+    #     fre_mean[i]=np.mean(dataset.fre_count[i])
+    # # plot_table(dataset.fre_count,"events per second")
+    # for i in pic_num:
+    #     x_pos,y_pos,t_pos=dataset.plot_3d(i)
+
+        # from data_analyze import show_pic_by_content,gen_frame
+        # show_pic_by_content(gen_frame(x_pos,y_pos,t_pos,para_before_tune))
+    events_label=defaultdict(list)
+    # for i in range(len(dataset.train_set_eve.targets)):
+    #     x_pos,y_pos,t_pos=dataset.plot_3d(i)
+    #     events_label[dataset.train_set_eve.targets[i]].append(len(t_pos))
+
+
     data_before_tune = id_verse_time.Datasample(dataset.train_set_eve[idx], para_before_tune, "before tune")
+    data_before_tune.draw_scatter_of_cur_verse_pulse(0.5,2,1)
+
     data_after_tune = id_verse_time.Datasample(dataset.train_set_eve[idx], para_after_tune, "after tune")
     data_after_tune_without_lcl = id_verse_time.Datasample(dataset.train_set_eve[idx],
                                                            para_after_tune_without_lower_current_limit,
                                                            "after tune no limits")
     biggest_change_idx = find_biggest_change(data_before_tune, data_after_tune)
 
-    data_before_tune.plt_pixel(biggest_change_idx[0], biggest_change_idx[1])
-    data_after_tune.plt_pixel(biggest_change_idx[0], biggest_change_idx[1])
-    data_after_tune_without_lcl.plt_pixel(biggest_change_idx[0], biggest_change_idx[1])
+    data_before_tune.plt_pixel(41, 58)
+    # data_after_tune.plt_pixel(biggest_change_idx[0], biggest_change_idx[1])
+    data_after_tune_without_lcl.plt_pixel(97, 98)
 
     data_before_tune.plot_pic()
-    data_after_tune.plot_pic()
+    # data_after_tune.plot_pic()
     data_after_tune_without_lcl.plot_pic()
-    data_before_tune.plot_comparative_curve(data_after_tune, biggest_change_idx[0], biggest_change_idx[1])
+    # data_before_tune.plot_comparative_curve(data_after_tune, biggest_change_idx[0], biggest_change_idx[1])
     data_before_tune.plot_comparative_curve(data_after_tune_without_lcl, biggest_change_idx[0], biggest_change_idx[1])

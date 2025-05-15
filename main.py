@@ -72,9 +72,9 @@ if __name__ == '__main__':
     import improvement_tuning
     # 0-9 total 10 classes
     #
-    # improvement_tuning.add_polarity_process_transistor(8, train=True, calculate=False)
-    # improvement_tuning.add_polarity_process_transistor(8, train=False,calculate=False)
-    # improvement_tuning.gen_augmentation_frame(8)
+    improvement_tuning.add_polarity_process_transistor(8, train=True, calculate=False)
+    improvement_tuning.add_polarity_process_transistor(8, train=False,calculate=False)
+    improvement_tuning.gen_augmentation_frame(8)
 
     # improvement_tuning.gen_tuned_stack_frame(8, tune=True)
     # # readout model
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # resnet_10.hyper_tuner_for_times(aug=True, tune=False, model_path=name,times=5)
     for i in range(100):
         try:
-            resnet_10.hyper_tuner_for_times(aug=True, tune=False, model_path=name,times=1)
+            resnet_10.hyper_tuner_for_times(aug=True, tune=True, model_path=name,times=1)
         except Exception as e:
             print(e)
     # import resnet_10
