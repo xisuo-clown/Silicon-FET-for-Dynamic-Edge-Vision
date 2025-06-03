@@ -134,7 +134,7 @@ def hyper_tuner(aug,name,dir_name, suffix, mode=False,resnet_num=3,model_path="r
     #         file.write(str(accuracy))
     #     import os
 
-    # 手动复制文件
+
     #         with open(checkpoint_path, "rb") as source:
     #             with open("destination_file.h5", "wb") as destination:
     #                 destination.write(source.read())

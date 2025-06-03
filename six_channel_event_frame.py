@@ -13,18 +13,18 @@ t_interval = 2E-4
 # (e.g. 2s event stream => n_clip = 3)
 # n_clip = 3
 
-n_clip = 3
+n_clip = 12
 # 2. n_num: sum of divided parts(5=>split into 5 parts)!!!!!!!when change the n_num, the n_step may need to reset
 # n_num = 5
 
 # n_num=3
 
-n_num = 3
+n_num = 6
 # 3. n_step: the step (the gap of the events number from the beginning of present
 # part to the beginning of next part) (e.g. 6=>total events/6 as step length)
 
 # n_step=6
-n_step = 6
+n_step = 12
 def find_idx(t0,t):
     for i,v in enumerate(t):
         if v >= t0:
