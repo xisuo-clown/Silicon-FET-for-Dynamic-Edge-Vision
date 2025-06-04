@@ -1,2 +1,2 @@
 # graduate_thesis
-private only
+When 

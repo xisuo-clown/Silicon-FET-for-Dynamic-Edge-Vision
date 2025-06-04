@@ -682,6 +682,36 @@ def calculate_id(i_d, t, last: bool):
     return i_d
 
 
+def gen_current(pulse,t_end,i_d):
+    return gen_current_by_interval_table(i_d,get_interval_by_time(get_time_by_pulse(pulse),t_end))
+
+def get_time_by_pulse(pulse):
+    return np.where(pulse==1)[0]
+
+def get_interval_by_time(time_l,t_end):
+    interval_table=[]
+    for i in range(1,len(time_l)):
+        interval_table.append(time_l[i]-time_l[i-1])
+    interval_table.append(t_end-time_l[-1])
+    return interval_table
+
+
+def gen_current_by_interval_table(i_d,interval_table):
+    id_last = i_d.d[0]
+    for j in interval_table:
+
+        y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b = i_d.get_para(id_last)
+
+        id_b, id_a = id_time_new(id_last, j, y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b)
+
+        if j != interval_table[-1]:
+            id_last = id_a
+
+        else:
+            id_last = id_b
+
+    return max(id_last-15.2, 0)
+
 def gen_augmentation_frame(suffix: str):
     import os
     import numpy as np
