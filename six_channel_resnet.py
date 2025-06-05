@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 
 
-def hyper_tuner(aug,name,dir_name, suffix, mode=False,resnet_num=3,model_path="results"):
+def hyper_tuner(aug,name,dir_name, suffix, fet_mode=False,resnet_num=3,model_path="results"):
     import os
     os.makedirs(dir_name, exist_ok=True)
     import time
@@ -18,7 +18,7 @@ def hyper_tuner(aug,name,dir_name, suffix, mode=False,resnet_num=3,model_path="r
     train_validation_rate = 0.125
 
     x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate, suffix,
-                                                                       mode)
+                                                                       fet_mode)
 
     bs = 100
     print("batch size: ", bs)
@@ -29,12 +29,18 @@ def hyper_tuner(aug,name,dir_name, suffix, mode=False,resnet_num=3,model_path="r
     # ########residual##########################
     from keras.callbacks import EarlyStopping
     from six_channel_event_frame import n_num
-    hypermodel = ResNetLSTM(10,n_num)
+    if not fet_mode:
+        hypermodel = ResNetLSTM(10,n_num)
+        hypermodel.build(input_shape=(None, n_num, 128, 128, 2))
+    else:
+        from params_adjustment import ResNet18
+        hypermodel = ResNet18(10)
+        hypermodel.build(input_shape=(None, 128, 128, 2))
     # from tensorflow.keras.applications import ResNet50
     # hypermodel=ResNet50(weights='imagenet', include_top=False, input_tensor=Input(shape=(128, 128, 2)))
     # hypermodel=None_ResnetBlock(2);
     # #print the model# ############
-    hypermodel.build(input_shape=(None,n_num, 128, 128, 2))
+
     hypermodel.build_graph().summary()
     # tf.keras.utils.plot_model(
     #     hypermodel.build_graph(),  # here is the trick (for now)

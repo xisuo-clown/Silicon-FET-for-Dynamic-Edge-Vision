@@ -681,36 +681,61 @@ def calculate_id(i_d, t, last: bool):
         i_d = id_num_exp(id_b_p)
     return i_d
 
+def gen_current_by_seq(seq_map):
+    current_map=seq_map.copy()
+    if len(seq_map) == 4:
+        current_map = np.moveaxis(seq_map, 0, -1)
+    if len(seq_map) == 5:
+        current_map = np.moveaxis(seq_map, 1, -1)
+    return np.apply_along_axis(gen_current, axis=-1, arr=current_map)
 
-def gen_current(pulse,t_end,i_d):
+def gen_current(pulse,t_end=6):
+    y0 = [20.06402, 20.31625, 20.55575]
+    A1 = [6.30373, 6.65462, 9.10203]
+    t1 = [1.49676E-5, 1.93912E-5, 2.84333E-5]
+    A2 = [4.72692, 4.61784, 2.19681]
+    t2 = [8.72838E-5, 1.09493E-4, 2.77744E-4]
+    A3 = [0.5666, 0.45408, 0.59678]
+    t3 = [0.01394, 0.12556, 1.29371]
+    d = [28.81179, 29.65465, 30.59423]
+    a = 0.89091
+    b = 6.78201
+    i_d = calculate_match(y0, A1, t1, A2, t2, A3, t3, d, a, b)
     return gen_current_by_interval_table(i_d,get_interval_by_time(get_time_by_pulse(pulse),t_end))
 
 def get_time_by_pulse(pulse):
-    return np.where(pulse==1)[0]
+    threshold=15
+    return np.where(pulse>threshold)[0]
 
 def get_interval_by_time(time_l,t_end):
     interval_table=[]
-    for i in range(1,len(time_l)):
-        interval_table.append(time_l[i]-time_l[i-1])
-    interval_table.append(t_end-time_l[-1])
+    c=3e-4
+    if len(time_l)>0:
+        for i in range(1,len(time_l)):
+            interval_table.append(time_l[i]-time_l[i-1])
+        interval_table.append(t_end-time_l[-1])
+    interval_table=[j*c for j in interval_table]
     return interval_table
 
 
 def gen_current_by_interval_table(i_d,interval_table):
-    id_last = i_d.d[0]
-    for j in interval_table:
+    if len(interval_table)>0:
+        id_last = i_d.d[0]
+        for idx,j in enumerate(interval_table):
 
-        y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b = i_d.get_para(id_last)
+            y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b = i_d.get_para(id_last)
 
-        id_b, id_a = id_time_new(id_last, j, y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b)
+            id_b, id_a = id_time_new(id_last, j, y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b)
 
-        if j != interval_table[-1]:
-            id_last = id_a
+            if idx != len(interval_table)-1:
+                id_last = id_a
 
-        else:
-            id_last = id_b
+            else:
+                id_last = id_b
+        return max(id_last - 15.2, 0)
+    else :
+        return 0
 
-    return max(id_last-15.2, 0)
 
 def gen_augmentation_frame(suffix: str):
     import os
@@ -1116,7 +1141,7 @@ def hyper_tuner_for_times(aug, tune, model_path, times: int, dir_name: str, suff
                     decay_steps, decay_rate, STEPS, dir_name, suffix, mode,resnet_num)
 
 
-def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix="str", mode=True):
+def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix="str", fet_mode=False):
     import os
     root_dir, train_path, test_path = find_path(suffix)
     # processing
@@ -1135,7 +1160,15 @@ def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix=
     y_test = np.load(os.path.join(test_path, "dataset_labels.npy".format(name)), allow_pickle=True)
     x_train = np.load(os.path.join(train_path, "{0}dataset_features.npy".format(name)), allow_pickle=True)
     y_train = np.load(os.path.join(train_path, "{0}dataset_labels.npy".format(name)), allow_pickle=True)
-
+    if fet_mode:
+        if os.path.exists("x_train.npy") and os.path.exists("x_test.npy"):
+            x_train = np.load("x_train.npy")
+            x_test = np.load("x_test.npy")
+        else:
+            x_train=gen_current_by_seq(x_train)
+            x_test=gen_current_by_seq(x_test)
+        x_train=np.array(x_train,dtype=np.float32)
+        x_test=np.array(x_test,dtype=np.float32)
     # print(x_train.shape)
     # print(y_train)
     from sklearn.preprocessing import LabelEncoder
@@ -1171,10 +1204,7 @@ def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix=
     # x_train, y_train=remove_set(x_train,y_train,[i for i in range(8)])
     # x_train, y_train=remove_set(x_train, y_train, [7],True)
     # x_train, y_train = remove_set(x_train, y_train, [i for i in range(10)], True)
-    if mode:
-        # x_train, x_test = frame_normalization(x_train, x_test)
-        x_train = enhance_brightness(x_train, y_train,0.9)
-        x_test = enhance_brightness(x_test, y_test,0.9)
+
     print_len_for_each_label(y_train)
     print_len_for_each_label(y_test)
 
