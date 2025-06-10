@@ -683,11 +683,20 @@ def calculate_id(i_d, t, last: bool):
 
 def gen_current_by_seq(seq_map):
     current_map=seq_map.copy()
-    if len(seq_map) == 4:
+    if len(seq_map.shape) == 4:
         current_map = np.moveaxis(seq_map, 0, -1)
-    if len(seq_map) == 5:
+    if len(seq_map.shape) == 5:
         current_map = np.moveaxis(seq_map, 1, -1)
-    return np.apply_along_axis(gen_current, axis=-1, arr=current_map)
+    shape = current_map.shape
+    axis_len = shape[-1]
+    result_shape = shape[:-1]
+    result = np.empty(result_shape, dtype=np.float32)
+    total_iterations = int(np.prod(result_shape))
+    
+    for idx in tqdm(np.ndindex(result_shape),total=total_iterations):
+        x = current_map[idx]
+        result[idx] = gen_current(x)
+    return result
 
 def gen_current(pulse,t_end=6):
     y0 = [20.06402, 20.31625, 20.55575]
@@ -1167,6 +1176,8 @@ def polar_remove_load(aug, random_state=86, train_validation_rate=0.125, suffix=
         else:
             x_train=gen_current_by_seq(x_train)
             x_test=gen_current_by_seq(x_test)
+            np.save("x_train.npy", x_train)
+            np.save("x_test.npy", x_test)
         x_train=np.array(x_train,dtype=np.float32)
         x_test=np.array(x_test,dtype=np.float32)
     # print(x_train.shape)

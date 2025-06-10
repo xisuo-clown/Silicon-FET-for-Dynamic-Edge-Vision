@@ -39,4 +39,4 @@ if __name__ == '__main__':
 
         name = datetime.now().strftime("%Y%m%d_%H%M%S")
         dir_name=os.path.join(test_save_path,"test_results_3_resnet")
-        hyper_tuner(True,name,dir_name,suffix)
+        hyper_tuner(True,name,dir_name,suffix,True)
