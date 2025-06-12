@@ -1,6 +1,9 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+
+
+
 def current_weights_test(seq_map):
     from params_adjustment import gen_current
     current_map = np.moveaxis(seq_map, 0, -1)

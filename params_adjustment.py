@@ -713,12 +713,12 @@ def gen_current(pulse,t_end=6):
     return gen_current_by_interval_table(i_d,get_interval_by_time(get_time_by_pulse(pulse),t_end))
 
 def get_time_by_pulse(pulse):
-    threshold=15
+    threshold=0
     return np.where(pulse>threshold)[0]
 
 def get_interval_by_time(time_l,t_end):
     interval_table=[]
-    c=3e-4
+    c=3e-5
     if len(time_l)>0:
         for i in range(1,len(time_l)):
             interval_table.append(time_l[i]-time_l[i-1])
@@ -727,9 +727,24 @@ def get_interval_by_time(time_l,t_end):
     return interval_table
 
 
+def gen_curve(id_table):
+
+    x, y = zip(*id_table)
+    # plt.scatter(x, y, color='red', marker='o', label='数据点')
+    plt.plot(x, y, marker='o', linestyle='-', color='blue', label='交替连线')
+    plt.title('根据元组数据绘制的折线图')
+    plt.xlabel('X轴')
+    plt.ylabel('Y轴')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
 def gen_current_by_interval_table(i_d,interval_table):
     if len(interval_table)>0:
+        id_table=[]
         id_last = i_d.d[0]
+        id_table.append((0, id_last))
+        t=0
         for idx,j in enumerate(interval_table):
 
             y_0, A_1, A_2, A_3, t_1, t_2, t_3, d_, l_a, l_b = i_d.get_para(id_last)
@@ -741,6 +756,12 @@ def gen_current_by_interval_table(i_d,interval_table):
 
             else:
                 id_last = id_b
+            t+=j
+            id_table.append((t,id_b))
+            id_table.append((t, id_a))
+        # if len(interval_table)==6:
+        #     gen_curve(id_table)
+        #     print()
         return max(id_last - 15.2, 0)
     else :
         return 0
