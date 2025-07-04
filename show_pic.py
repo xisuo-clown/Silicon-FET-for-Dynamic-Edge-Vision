@@ -74,5 +74,6 @@ def img_show_by_name(name,if_fet=False,seq=1077):
     # ######################display negative and positive###############
 
 for i in range(1000):
-    test=np.load('Aug_dataset_features.npy')[i]
-    show_compare(test)
+    name="x_train_10_3e-05.npy"
+    test=np.load(name)[i]
+    img_show(test)

@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     from six_channel_resnet import hyper_tuner
     from datetime import datetime
-    while True:
+    for i in range(10):
 
         name = datetime.now().strftime("%Y%m%d_%H%M%S")
         dir_name=os.path.join(test_save_path,"test_results_3_resnet")

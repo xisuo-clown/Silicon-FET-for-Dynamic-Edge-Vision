@@ -1,3 +1,5 @@
+from skimage.filters.rank import threshold
+
 from params_adjustment import polar_remove_load
 from params_adjustment import plot_cm, plt_loss_acc
 from keras.layers import Dense, Conv2D, MaxPool2D, Flatten, GlobalAveragePooling2D, BatchNormalization, Layer, Add, \
@@ -16,9 +18,10 @@ def hyper_tuner(aug,name,dir_name, suffix, fet_mode=False,resnet_num=3,model_pat
     start = time.time()
     random_state = 86
     train_validation_rate = 0.125
-
+    threshold=0
+    intervals=3e-4
     x_train, x_test, y_train, y_test, x_val, y_val = polar_remove_load(aug, random_state, train_validation_rate, suffix,
-                                                                       fet_mode)
+                                                                       fet_mode,threshold,intervals)
 
     bs = 100
     print("batch size: ", bs)
